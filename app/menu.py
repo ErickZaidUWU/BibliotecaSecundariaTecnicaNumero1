@@ -1,15 +1,15 @@
 import sys
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout,
-    QHBoxLayout, QPushButton, QLabel, QLineEdit,
+    QHBoxLayout, QPushButton, QLabel,
     QFrame, QGraphicsDropShadowEffect, QStackedWidget
 )
-from PyQt5.QtCore import Qt, QPropertyAnimation, QEasingCurve, QRect, QTimer
+from PyQt5.QtCore import Qt
 from PyQt5.QtGui import (
     QColor, QFont, QPalette, QLinearGradient,
-    QBrush, QPainter, QPainterPath, QFontDatabase
+    QBrush, QPainter
 )
-from colors.colors import TEXT_PRIMARY, TEXT_MUTED, ACCENT, ERROR, SUCCESS, DARK_BG, CARD_BG, BORDER, INPUT_BG, ACCENT_HOVER
+from colors.colors import TEXT_PRIMARY, TEXT_MUTED, ACCENT, DARK_BG, CARD_BG, BORDER, INPUT_BG
 from componets.componets import PrimaryButton
 from login import LoginPanel
 from register import RegisterPanel
@@ -51,7 +51,7 @@ class WelcomePanel(QWidget):
         layout.addWidget(logo)
 
         # Título
-        title = QLabel("Bienvenido")
+        title = QLabel("Bienvenid@")
         title.setAlignment(Qt.AlignCenter)
         title.setFont(QFont("Segoe UI", 26, QFont.Bold))
         title.setStyleSheet(f"color: {TEXT_PRIMARY}; letter-spacing: -0.5px;")
@@ -113,7 +113,7 @@ class WelcomePanel(QWidget):
         layout.addWidget(btn_register)
 
         # Footer
-        footer = QLabel("Al continuar aceptas nuestros Términos de Uso")
+        footer = QLabel("Sistema de Gestión de Biblioteca Técnica Nº1")
         footer.setAlignment(Qt.AlignCenter)
         footer.setFont(QFont("Segoe UI", 9))
         footer.setStyleSheet(f"color: {TEXT_MUTED}; margin-top: 12px;")
@@ -148,7 +148,7 @@ class AuthWindow(QMainWindow):
         tb_layout = QHBoxLayout(title_bar)
         tb_layout.setContentsMargins(14, 0, 14, 0)
 
-        app_name = QLabel("◈  AuthApp")
+        app_name = QLabel("◈  Biblioteca Técnica Nº1")
         app_name.setFont(QFont("Segoe UI", 10, QFont.Bold))
         app_name.setStyleSheet(f"color: {ACCENT};")
         tb_layout.addWidget(app_name)
@@ -195,7 +195,7 @@ class AuthWindow(QMainWindow):
         self.stack = QStackedWidget()
         self.welcome  = WelcomePanel(self._go_login, self._go_register)
         self.login    = LoginPanel(self._go_welcome)
-        self.register = RegisterPanel(self._go_welcome)
+        self.register = RegisterPanel(self._go_welcome, self._go_login) 
 
         self.stack.addWidget(self.welcome)   # index 0
         self.stack.addWidget(self.login)     # index 1

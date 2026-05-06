@@ -1,24 +1,23 @@
 import sys
 from PyQt5.QtWidgets import (
-    QApplication, QMainWindow, QWidget, QVBoxLayout,
-    QHBoxLayout, QPushButton, QLabel, QLineEdit,
-    QFrame, QGraphicsDropShadowEffect, QStackedWidget
+    QWidget, QVBoxLayout,
+    QPushButton, QLabel, QLineEdit,
 )
-from PyQt5.QtCore import Qt, QPropertyAnimation, QEasingCurve, QRect, QTimer
+from PyQt5.QtCore import Qt
 from PyQt5.QtGui import (
-    QColor, QFont, QPalette, QLinearGradient,
-    QBrush, QPainter, QPainterPath, QFontDatabase
+    QFont
 )
 
-from colors.colors import TEXT_PRIMARY, TEXT_MUTED, ACCENT, ERROR, SUCCESS, DARK_BG, CARD_BG, BORDER, INPUT_BG, ACCENT_HOVER
-from componets.componets import StyledInput, PrimaryButton, LinkButton
+from colors.colors import TEXT_PRIMARY, TEXT_MUTED, ACCENT, ERROR, SUCCESS
+from componets.componets import StyledInput, PrimaryButton
 
 
 
 # ── Panel de Registro ─────────────────────────────────────────────────────────
 class RegisterPanel(QWidget):
-    def __init__(self, on_back):
+    def __init__(self, on_back, on_login=None):
         super().__init__()
+        self._on_login_cb = on_login 
         layout = QVBoxLayout(self)
         layout.setSpacing(10)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -74,8 +73,10 @@ class RegisterPanel(QWidget):
         already.setAlignment(Qt.AlignCenter)
         already.setFont(QFont("Segoe UI", 10))
         already.setStyleSheet(f"color: {TEXT_MUTED}; font-size: 12px; margin-top: 4px;")
+        already.setOpenExternalLinks(False)                          # ← no abrir browser
+        already.linkActivated.connect(lambda: self._on_login_cb and self._on_login_cb())  # ← navegar
         layout.addWidget(already)
-
+        
     def _on_register(self):
         self.msg_label.setStyleSheet(f"color: {SUCCESS}; font-size: 12px;")
         self.msg_label.setText("✓  Cuenta creada con éxito. ¡Bienvenido/a!")
