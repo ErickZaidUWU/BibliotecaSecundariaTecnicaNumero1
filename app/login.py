@@ -15,8 +15,9 @@ from componets.componets import StyledInput, PrimaryButton, LinkButton
 
 # ── Panel de Inicio de Sesión ─────────────────────────────────────────────────
 class LoginPanel(QWidget):
-    def __init__(self, on_back):
+    def __init__(self, on_back, on_success=None):   # ← NUEVO: on_success
         super().__init__()
+        self._on_success = on_success               # ← guarda el callback
         layout = QVBoxLayout(self)
         layout.setSpacing(14)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -82,8 +83,18 @@ class LoginPanel(QWidget):
     def _on_login(self):
         email = self.email_input.text().strip()
         pwd   = self.pass_input.text()
+
         if not email or not pwd:
+            self.msg_label.setStyleSheet(f"color: {ERROR}; font-size: 12px;")
             self.msg_label.setText("⚠  Por favor completa todos los campos.")
             return
+
         self.msg_label.setStyleSheet(f"color: {SUCCESS}; font-size: 12px;")
         self.msg_label.setText("✓  Iniciando sesión…")
+
+        # ← Espera 800 ms y luego abre el CRUD
+        QTimer.singleShot(800, lambda: self._launch(email))
+
+    def _launch(self, email):
+        if self._on_success:
+            self._on_success(email)

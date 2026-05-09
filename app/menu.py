@@ -13,6 +13,8 @@ from colors.colors import TEXT_PRIMARY, TEXT_MUTED, ACCENT, DARK_BG, CARD_BG, BO
 from componets.componets import PrimaryButton
 from login import LoginPanel
 from register import RegisterPanel
+from crud import LibraryCRUD          # ← importa la ventana CRUD
+
 
 # ── Widget de fondo con gradiente ─────────────────────────────────────────────
 class GradientBackground(QWidget):
@@ -25,12 +27,10 @@ class GradientBackground(QWidget):
         gradient.setColorAt(1.0, QColor("#0D1117"))
         painter.fillRect(self.rect(), QBrush(gradient))
 
-        # Círculo decorativo superior
         painter.setBrush(QColor(108, 99, 255, 18))
         painter.setPen(Qt.NoPen)
         painter.drawEllipse(-80, -80, 380, 380)
 
-        # Círculo decorativo inferior
         painter.setBrush(QColor(78, 205, 196, 12))
         painter.drawEllipse(self.width() - 200, self.height() - 150, 350, 350)
 
@@ -43,28 +43,24 @@ class WelcomePanel(QWidget):
         layout.setSpacing(16)
         layout.setContentsMargins(0, 0, 0, 0)
 
-        # Ícono / Logo
         logo = QLabel("◈")
         logo.setAlignment(Qt.AlignCenter)
         logo.setFont(QFont("Segoe UI", 46))
         logo.setStyleSheet(f"color: {ACCENT}; margin-bottom: 4px;")
         layout.addWidget(logo)
 
-        # Título
         title = QLabel("Bienvenid@")
         title.setAlignment(Qt.AlignCenter)
         title.setFont(QFont("Segoe UI", 26, QFont.Bold))
         title.setStyleSheet(f"color: {TEXT_PRIMARY}; letter-spacing: -0.5px;")
         layout.addWidget(title)
 
-        # Subtítulo
         subtitle = QLabel("¿Qué deseas hacer hoy?")
         subtitle.setAlignment(Qt.AlignCenter)
         subtitle.setFont(QFont("Segoe UI", 11))
         subtitle.setStyleSheet(f"color: {TEXT_MUTED}; margin-bottom: 20px;")
         layout.addWidget(subtitle)
 
-        # Botón Iniciar Sesión
         btn_login = PrimaryButton("  Iniciar Sesión")
         btn_login.clicked.connect(on_login)
         layout.addWidget(btn_login)
@@ -86,7 +82,6 @@ class WelcomePanel(QWidget):
             sep_layout.addWidget(line)
         layout.addLayout(sep_layout)
 
-        # Botón Registrarse
         btn_register = QPushButton("  Crear Cuenta")
         btn_register.setFixedHeight(50)
         btn_register.setCursor(Qt.PointingHandCursor)
@@ -112,14 +107,11 @@ class WelcomePanel(QWidget):
         btn_register.clicked.connect(on_register)
         layout.addWidget(btn_register)
 
-        # Footer
         footer = QLabel("Sistema de Gestión de Biblioteca Técnica Nº1")
         footer.setAlignment(Qt.AlignCenter)
         footer.setFont(QFont("Segoe UI", 9))
         footer.setStyleSheet(f"color: {TEXT_MUTED}; margin-top: 12px;")
         layout.addWidget(footer)
-
-
 
 
 # ── Ventana Principal ─────────────────────────────────────────────────────────
@@ -131,6 +123,7 @@ class AuthWindow(QMainWindow):
         self.setWindowFlags(Qt.FramelessWindowHint)
         self.setAttribute(Qt.WA_TranslucentBackground)
         self._drag_pos = None
+        self._crud_window = None    # ← referencia a la ventana CRUD
         self._build_ui()
 
     def _build_ui(self):
@@ -194,8 +187,8 @@ class AuthWindow(QMainWindow):
         # Stack de paneles
         self.stack = QStackedWidget()
         self.welcome  = WelcomePanel(self._go_login, self._go_register)
-        self.login    = LoginPanel(self._go_welcome)
-        self.register = RegisterPanel(self._go_welcome, self._go_login) 
+        self.login    = LoginPanel(self._go_welcome, on_success=self._open_crud)  # ← conectado
+        self.register = RegisterPanel(self._go_welcome, on_login=self._go_login)  # ← link ya corregido
 
         self.stack.addWidget(self.welcome)   # index 0
         self.stack.addWidget(self.login)     # index 1
@@ -205,7 +198,6 @@ class AuthWindow(QMainWindow):
         outer.addWidget(card, alignment=Qt.AlignCenter)
         outer.addStretch()
 
-        # Ajustar tamaño de tarjeta
         card.setFixedWidth(348)
         card.setMinimumHeight(460)
 
@@ -213,6 +205,23 @@ class AuthWindow(QMainWindow):
     def _go_welcome(self):  self.stack.setCurrentIndex(0)
     def _go_login(self):    self.stack.setCurrentIndex(1)
     def _go_register(self): self.stack.setCurrentIndex(2)
+
+    # ── Abrir CRUD tras login exitoso ──────────────────────────────────────────
+    def _open_crud(self, email: str):
+        self.hide()                         # oculta la ventana de auth
+        self._crud_window = LibraryCRUD(
+            user_email=email,
+            on_logout=self._on_logout       # al cerrar sesión vuelve al login
+        )
+        self._crud_window.show()
+
+    def _on_logout(self):
+        # Vuelve al login limpiando los campos
+        self.login.email_input.clear()
+        self.login.pass_input.clear()
+        self.login.msg_label.setText("")
+        self._go_login()
+        self.show()
 
     # ── Arrastrar ventana ──────────────────────────────────────────────────────
     def mousePressEvent(self, event):
