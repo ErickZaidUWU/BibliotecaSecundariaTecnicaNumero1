@@ -4,25 +4,22 @@ from PyQt5.QtWidgets import (
     QHBoxLayout, QPushButton, QLabel, QLineEdit,
     QFrame, QGraphicsDropShadowEffect, QStackedWidget
 )
-from PyQt5.QtCore import Qt, QPropertyAnimation, QEasingCurve, QRect, QTimer
-from PyQt5.QtGui import (
-    QColor, QFont, QPalette, QLinearGradient,
-    QBrush, QPainter, QPainterPath, QFontDatabase
-)
+from PyQt5.QtCore import Qt, QTimer
+from PyQt5.QtGui import QFont
 
-from colors.colors import TEXT_PRIMARY, TEXT_MUTED, ACCENT, ERROR, SUCCESS, DARK_BG, CARD_BG, BORDER, INPUT_BG, ACCENT_HOVER
+from colors.colors import TEXT_PRIMARY, TEXT_MUTED, ACCENT, ERROR, SUCCESS
 from componets.componets import StyledInput, PrimaryButton, LinkButton
+from supabase_client import supabase
 
-# ── Panel de Inicio de Sesión ─────────────────────────────────────────────────
+
 class LoginPanel(QWidget):
-    def __init__(self, on_back, on_success=None):   # ← NUEVO: on_success
+    def __init__(self, on_back, on_success=None):   
         super().__init__()
-        self._on_success = on_success               # ← guarda el callback
+        self._on_success = on_success               
         layout = QVBoxLayout(self)
         layout.setSpacing(14)
         layout.setContentsMargins(0, 0, 0, 0)
 
-        # Botón atrás
         back_btn = QPushButton("← Volver")
         back_btn.setCursor(Qt.PointingHandCursor)
         back_btn.setFont(QFont("Segoe UI", 10))
@@ -60,16 +57,6 @@ class LoginPanel(QWidget):
         self.pass_input = StyledInput("••••••••", QLineEdit.Password)
         layout.addWidget(self.pass_input)
 
-        forgot = LinkButton("¿Olvidaste tu contraseña?")
-        forgot.setStyleSheet(f"""
-            QPushButton {{
-                background: transparent; color: {TEXT_MUTED};
-                border: none; font-size: 12px; text-align: right;
-            }}
-            QPushButton:hover {{ color: {ACCENT}; }}
-        """)
-        layout.addWidget(forgot, alignment=Qt.AlignRight)
-
         self.msg_label = QLabel("")
         self.msg_label.setAlignment(Qt.AlignCenter)
         self.msg_label.setFont(QFont("Segoe UI", 10))
@@ -82,18 +69,24 @@ class LoginPanel(QWidget):
 
     def _on_login(self):
         email = self.email_input.text().strip()
-        pwd   = self.pass_input.text()
+        pwd = self.pass_input.text()
 
         if not email or not pwd:
             self.msg_label.setStyleSheet(f"color: {ERROR}; font-size: 12px;")
-            self.msg_label.setText("⚠  Por favor completa todos los campos.")
+            self.msg_label.setText("⚠ Por favor completa todos los campos.")
             return
 
-        self.msg_label.setStyleSheet(f"color: {SUCCESS}; font-size: 12px;")
-        self.msg_label.setText("✓  Iniciando sesión…")
-
-        # ← Espera 800 ms y luego abre el CRUD
-        QTimer.singleShot(800, lambda: self._launch(email))
+        try:
+            response = supabase.auth.sign_in_with_password({"email": email, "password": pwd})
+            
+            self.msg_label.setStyleSheet(f"color: {SUCCESS}; font-size: 12px;")
+            self.msg_label.setText("✓ Iniciando sesión…")
+            
+            QTimer.singleShot(800, lambda: self._launch(response.user.email))
+            
+        except Exception as e:
+            self.msg_label.setStyleSheet(f"color: {ERROR}; font-size: 12px;")
+            self.msg_label.setText("⚠ Credenciales incorrectas o error de conexión.")
 
     def _launch(self, email):
         if self._on_success:
