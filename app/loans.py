@@ -2,7 +2,7 @@ import sys
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QPushButton, QLabel, QLineEdit, QFrame, QTableWidget, 
-    QTableWidgetItem, QHeaderView, QDialog, QMessageBox, QComboBox
+    QTableWidgetItem, QHeaderView, QDialog, QMessageBox, QComboBox, QDateEdit
 )
 from PyQt5.QtCore import Qt, QTimer, QDate
 from PyQt5.QtGui import (
@@ -108,7 +108,37 @@ BTN_ACCENT = f"""
         background: rgba(108,99,255,0.25);
     }}
 """
+INPUT_STYLE = f"""
+    QLineEdit, QComboBox, QDateEdit {{
+        background: {INPUT_BG};
+        border: 1px solid {BORDER};
+        border-radius: 10px;
+        color: {TEXT_PRIMARY};
+        font-size: 13px;
+        padding: 10px 14px;
+    }}
+    QLineEdit:focus, QComboBox:focus, QDateEdit:focus {{
+        border-color: {ACCENT};
+    }}
+"""
 
+CALENDAR_STYLE = f"""
+    QCalendarWidget QWidget {{
+        alternate-background-color: #1a1926;
+        background-color: {CARD_BG};
+        color: {TEXT_PRIMARY};
+    }}
+    QCalendarWidget QAbstractItemView:enabled {{
+        color: {TEXT_PRIMARY};
+        background-color: {DARK_BG};
+        selection-background-color: {ACCENT};
+        selection-color: {TEXT_PRIMARY};
+    }}
+    QCalendarWidget QMenu {{
+        background-color: {CARD_BG};
+        color: {TEXT_PRIMARY};
+    }}
+"""
 
 # ── Diálogo: Registrar / Editar Préstamo ──────────────────────────────────────
 class LoanDialog(QDialog):
@@ -122,6 +152,13 @@ class LoanDialog(QDialog):
         self.result_data = None  
         self.books_list = books_list if books_list else []
 
+        # Lista predefinida de grados y grupos
+        self.grade_groups_list = [
+            "1º A", "1º B", "1º C", "1º D", "1º E", "1º F", "1º G", "1º H", "1º I", "1º J", "1º K", "1º L",
+            "2º A", "2º B", "2º C", "2º D", "2º E", "2º F", "2º G", "2º H", "2º I", "2º J", "2º K", "2º L",
+            "3º A", "3º B", "3º C", "3º D", "3º E", "3º F", "3º G", "3º H", "3º I", "3º J", "3º K", "3º L",
+        ]
+
         layout = QVBoxLayout(self)
         layout.setSpacing(10)
         layout.setContentsMargins(28, 22, 28, 22)
@@ -131,7 +168,7 @@ class LoanDialog(QDialog):
         ttl.setStyleSheet(f"color: {TEXT_PRIMARY};")
         layout.addWidget(ttl)
 
-        # Selector de Libro (Traídos de la base de datos)
+        # 1. Selector de Libro
         lbl_book = QLabel("Libro Solicitado")
         lbl_book.setStyleSheet(f"color: {TEXT_MUTED}; font-size: 12px;")
         layout.addWidget(lbl_book)
@@ -145,43 +182,54 @@ class LoanDialog(QDialog):
             self.book_combo.addItem("No hay libros disponibles")
         layout.addWidget(self.book_combo)
 
-        # Campos de texto solicitados
-        fields = [
-            ("Alumno", "Nombre completo del alumno", "student"),
-            ("Grado y Grupo", "Ej: 4º B", "grade_group"),
-            ("Fecha de Salida", f"AAAA-MM-DD (Hoy: {QDate.currentDate().toString('yyyy-MM-dd')})", "loan_date"),
-            ("Fecha de Devolución", "AAAA-MM-DD", "return_date"),
-        ]
+        # 2. Nombre del Alumno
+        lbl_student = QLabel("Alumno")
+        lbl_student.setStyleSheet(f"color: {TEXT_MUTED}; font-size: 12px;")
+        layout.addWidget(lbl_student)
+        
+        self.student_input = QLineEdit()
+        self.student_input.setPlaceholderText("Nombre completo del alumno")
+        self.student_input.setFixedHeight(40)
+        self.student_input.setStyleSheet(INPUT_STYLE)
+        layout.addWidget(self.student_input)
 
-        self.inputs = {}
-        for label_text, placeholder, key in fields:
-            lbl = QLabel(label_text)
-            lbl.setStyleSheet(f"color: {TEXT_MUTED}; font-size: 12px;")
-            layout.addWidget(lbl)
+        # 3. Combo Box para Grado y Grupo
+        lbl_grade = QLabel("Grado y Grupo")
+        lbl_grade.setStyleSheet(f"color: {TEXT_MUTED}; font-size: 12px;")
+        layout.addWidget(lbl_grade)
+        
+        self.grade_combo = QComboBox()
+        self.grade_combo.setFixedHeight(40)
+        self.grade_combo.setStyleSheet(INPUT_STYLE)
+        self.grade_combo.addItems(self.grade_groups_list)
+        layout.addWidget(self.grade_combo)
 
-            inp = QLineEdit()
-            inp.setPlaceholderText(placeholder)
-            inp.setFixedHeight(40)
-            inp.setStyleSheet(INPUT_STYLE)
-            
-            # Autocompletar la fecha de hoy por comodidad si es nuevo préstamo
-            if key == "loan_date" and not loan_data:
-                inp.setText(QDate.currentDate().toString("yyyy-MM-dd"))
-                
-            layout.addWidget(inp)
-            self.inputs[key] = inp
+        # 4. Fecha de Salida
+        lbl_loan_date = QLabel("Fecha de Salida")
+        lbl_loan_date.setStyleSheet(f"color: {TEXT_MUTED}; font-size: 12px;")
+        layout.addWidget(lbl_loan_date)
+        
+        self.loan_date_input = QLineEdit()
+        self.loan_date_input.setFixedHeight(40)
+        self.loan_date_input.setStyleSheet(INPUT_STYLE)
+        self.loan_date_input.setText(QDate.currentDate().toString("yyyy-MM-dd"))
+        layout.addWidget(self.loan_date_input)
 
-        # Cargar datos si es edición
-        if loan_data:
-            # loan_data: [Libro, Alumno, Grado/Grupo, F. Salida, F. Devolución]
-            index = self.book_combo.findText(str(loan_data[0]))
-            if index >= 0:
-                self.book_combo.setCurrentIndex(index)
-            self.inputs["student"].setText(str(loan_data[1]))
-            self.inputs["grade_group"].setText(str(loan_data[2]))
-            self.inputs["loan_date"].setText(str(loan_data[3]))
-            self.inputs["return_date"].setText(str(loan_data[4]))
+        # 5. Calendario para la Fecha de Devolución
+        lbl_return_date = QLabel("Fecha de Devolución")
+        lbl_return_date.setStyleSheet(f"color: {TEXT_MUTED}; font-size: 12px;")
+        layout.addWidget(lbl_return_date)
+        
+        self.return_date_edit = QDateEdit()
+        self.return_date_edit.setFixedHeight(40)
+        self.return_date_edit.setStyleSheet(INPUT_STYLE)
+        self.return_date_edit.setCalendarPopup(True)  # Muestra el calendario al hacer clic
+        self.return_date_edit.setDisplayFormat("yyyy-MM-dd")
+        self.return_date_edit.setDate(QDate.currentDate().addDays(7)) # Por defecto añade una semana
+        self.return_date_edit.calendarWidget().setStyleSheet(CALENDAR_STYLE)
+        layout.addWidget(self.return_date_edit)
 
+        # Mensaje de error interno
         self.msg = QLabel("")
         self.msg.setStyleSheet(f"color: {ERROR}; font-size: 12px;")
         self.msg.setAlignment(Qt.AlignCenter)
@@ -210,20 +258,40 @@ class LoanDialog(QDialog):
 
         layout.addLayout(btn_row)
 
+        # Cargar datos existentes si se pasa a modo Edición
+        if loan_data:
+            idx_book = self.book_combo.findText(str(loan_data[0]))
+            if idx_book >= 0: self.book_combo.setCurrentIndex(idx_book)
+            
+            self.student_input.setText(str(loan_data[1]))
+            
+            idx_grade = self.grade_combo.findText(str(loan_data[2]))
+            if idx_grade >= 0: 
+                self.grade_combo.setCurrentIndex(idx_grade)
+            else: 
+                self.grade_combo.addItem(str(loan_data[2]))
+                self.grade_combo.setCurrentText(str(loan_data[2]))
+            
+            self.loan_date_input.setText(str(loan_data[3]))
+            
+            parsed_date = QDate.fromString(str(loan_data[4]), "yyyy-MM-dd")
+            if parsed_date.isValid():
+                self.return_date_edit.setDate(parsed_date)
+
     def _confirm(self):
         book = self.book_combo.currentText()
-        student = self.inputs["student"].text().strip()
-        grade_group = self.inputs["grade_group"].text().strip()
-        loan_date = self.inputs["loan_date"].text().strip()
-        return_date = self.inputs["return_date"].text().strip()
+        student = self.student_input.text().strip()
+        grade_group = self.grade_combo.currentText()
+        loan_date = self.loan_date_input.text().strip()
+        # Obtener la fecha seleccionada del calendario formateada como texto
+        return_date = self.return_date_edit.date().toString("yyyy-MM-dd")
 
-        if not all([student, grade_group, loan_date, return_date]) or book == "No hay libros disponibles":
-            self.msg.setText("⚠ Todos los campos son obligatorios.")
+        if not student or book == "No hay libros disponibles":
+            self.msg.setText("⚠ El nombre del alumno es obligatorio.")
             return
 
-        # Validación rápida de formato de fecha básico (AAAA-MM-DD)
-        if len(loan_date) != 10 or len(return_date) != 10 or loan_date[4] != '-' or return_date[4] != '-':
-            self.msg.setText("⚠ Las fechas deben tener el formato AAAA-MM-DD.")
+        if len(loan_date) != 10 or loan_date[4] != '-':
+            self.msg.setText("⚠ La fecha de salida debe tener el formato AAAA-MM-DD.")
             return
 
         self.result_data = [book, student, grade_group, loan_date, return_date]
