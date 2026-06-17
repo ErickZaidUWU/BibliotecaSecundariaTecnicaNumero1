@@ -170,7 +170,7 @@ class BookDialog(QDialog):
             self.inputs[label_text] = inp
 
         if book_data:
-            keys = ["Título", "Autor", "Año", "Categoría", "Cantidad"]
+            keys = ["Título", "Autor", "Año", "Categoría", "Stock"]
             for i, key in enumerate(keys):
                 self.inputs[key].setText(str(book_data[i]))
 
@@ -204,7 +204,7 @@ class BookDialog(QDialog):
 
     def _confirm(self):
         values = [self.inputs[k].text().strip() for k in
-                  ["Título", "Autor", "Año", "Categoría", "Cantidad"]]
+                  ["Título", "Autor", "Año", "Categoría", "Stock"]]
 
         if not all(values):
             self.msg.setText("⚠  Todos los campos son obligatorios.")
@@ -215,7 +215,7 @@ class BookDialog(QDialog):
             int(values[2])
             int(values[4])
         except ValueError:
-            self.msg.setText("⚠  Año y Cantidad deben ser números enteros.")
+            self.msg.setText("⚠  Año y Stock deben ser números enteros.")
             return
 
         self.result_data = values
