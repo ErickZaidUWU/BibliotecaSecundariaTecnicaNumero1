@@ -25,14 +25,18 @@ class GradientBackground(QWidget):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
         gradient = QLinearGradient(0, 0, self.width(), self.height())
-        gradient.setColorAt(0.0, QColor("#0D0D0F"))
-        gradient.setColorAt(0.5, QColor("#12101C"))
-        gradient.setColorAt(1.0, QColor("#0D1117"))
+        gradient.setColorAt(0.0, QColor(DARK_BG))
+        gradient.setColorAt(0.5, QColor(CARD_BG))
+        gradient.setColorAt(1.0, QColor(DARK_BG))
         painter.fillRect(self.rect(), QBrush(gradient))
-        painter.setBrush(QColor(108, 99, 255, 18))
+        glow = QColor(ACCENT)
+        glow.setAlpha(22)
+        painter.setBrush(glow)
         painter.setPen(Qt.NoPen)
         painter.drawEllipse(-80, -80, 420, 420)
-        painter.setBrush(QColor(78, 205, 196, 12))
+        glow2 = QColor(ACCENT)
+        glow2.setAlpha(14)
+        painter.setBrush(glow2)
         painter.drawEllipse(self.width() - 250, self.height() - 200, 400, 400)
 
 
@@ -44,18 +48,18 @@ TABLE_STYLE = f"""
         gridline-color: {BORDER};
         color: {TEXT_PRIMARY};
         font-size: 13px;
-        selection-background-color: rgba(108,99,255,0.18);
+        selection-background-color: rgba(255,115,7,0.18);
     }}
     QTableWidget::item {{
         padding: 10px 14px;
         border-bottom: 1px solid {BORDER};
     }}
     QTableWidget::item:selected {{
-        background: rgba(108,99,255,0.18);
+        background: rgba(255,115,7,0.18);
         color: {TEXT_PRIMARY};
     }}
     QHeaderView::section {{
-        background-color: #1a1926;
+        background-color: {CARD_BG};
         color: {TEXT_MUTED};
         font-size: 11px;
         font-weight: 600;
@@ -97,31 +101,33 @@ INPUT_STYLE = f"""
 
 BTN_DANGER = f"""
     QPushButton {{
-        background: rgba(226,75,74,0.12);
-        color: #e24b4a;
-        border: 1px solid rgba(226,75,74,0.30);
+        background: rgba(217,83,79,0.12);
+        color: {ERROR};
+        border: 1px solid rgba(217,83,79,0.30);
         border-radius: 8px;
         font-size: 12px;
         font-weight: 600;
         padding: 6px 14px;
     }}
     QPushButton:hover {{
-        background: rgba(226,75,74,0.22);
+        background: rgba(217,83,79,0.22);
+        border: 1px solid {ERROR};
     }}
 """
 
 BTN_ACCENT = f"""
     QPushButton {{
-        background: rgba(108,99,255,0.15);
+        background: rgba(255,115,7,0.15);
         color: {ACCENT};
-        border: 1px solid rgba(108,99,255,0.30);
+        border: 1px solid rgba(255,115,7,0.35);
         border-radius: 8px;
         font-size: 12px;
         font-weight: 600;
         padding: 6px 14px;
     }}
     QPushButton:hover {{
-        background: rgba(108,99,255,0.25);
+        background: rgba(255,115,7,0.25);
+        border: 1px solid {ACCENT};
     }}
 """
 
@@ -318,8 +324,8 @@ class LibraryCRUD(QMainWindow):
         self.toast.setFixedHeight(0)
         self.toast.setStyleSheet(f"""
             QLabel {{
-                background: rgba(108,99,255,0.15);
-                border: 1px solid rgba(108,99,255,0.35);
+                background: rgba(255,115,7,0.15);
+                border: 1px solid rgba(255,115,7,0.35);
                 border-radius: 8px;
                 color: {ACCENT};
                 font-size: 13px;
@@ -353,7 +359,7 @@ class LibraryCRUD(QMainWindow):
             chip = QFrame()
             chip.setStyleSheet(f"""
                 QFrame {{
-                    background: rgba(108,99,255,0.08);
+                    background: rgba(255,115,7,0.08);
                     border: 1px solid {BORDER};
                     border-radius: 10px;
                     padding: 6px 14px;

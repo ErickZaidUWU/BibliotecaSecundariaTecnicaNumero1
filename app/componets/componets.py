@@ -31,7 +31,7 @@ class StyledInput(QLineEdit):
             }}
             QLineEdit:focus {{
                 border: 1.5px solid {ACCENT};
-                background: #1A1A24;
+                background: {INPUT_BG};
             }}
             QLineEdit::placeholder {{
                 color: {TEXT_MUTED};
@@ -51,28 +51,21 @@ class PrimaryButton(QPushButton):
     def _apply_style(self, color):
         self.setStyleSheet(f"""
             QPushButton {{
-                background: qlineargradient(
-                    x1:0, y1:0, x2:1, y2:0,
-                    stop:0 {ACCENT}, stop:1 #9B5DE5
-                );
+                background: {ACCENT};
                 color: white;
-                border: none;
+                border: 2px solid transparent;
                 border-radius: 12px;
                 font-size: 14px;
                 font-weight: 700;
                 letter-spacing: 0.5px;
             }}
             QPushButton:hover {{
-                background: qlineargradient(
-                    x1:0, y1:0, x2:1, y2:0,
-                    stop:0 {ACCENT_HOVER}, stop:1 #B07BFF
-                );
+                background: {ACCENT_HOVER};
+                border: 2px solid {ACCENT};
             }}
             QPushButton:pressed {{
-                background: qlineargradient(
-                    x1:0, y1:0, x2:1, y2:0,
-                    stop:0 #5A52D5, stop:1 #8A50C8
-                );
+                background: {ACCENT_HOVER};
+                border: 2px solid {TEXT_PRIMARY};
             }}
         """)
 

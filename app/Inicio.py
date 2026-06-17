@@ -34,14 +34,18 @@ class GradientBackground(QWidget):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
         gradient = QLinearGradient(0, 0, self.width(), self.height())
-        gradient.setColorAt(0.0, QColor("#0D0D0F"))
-        gradient.setColorAt(0.5, QColor("#12101C"))
-        gradient.setColorAt(1.0, QColor("#0D1117"))
+        gradient.setColorAt(0.0, QColor(DARK_BG))
+        gradient.setColorAt(0.5, QColor(CARD_BG))
+        gradient.setColorAt(1.0, QColor(DARK_BG))
         painter.fillRect(self.rect(), QBrush(gradient))
-        painter.setBrush(QColor(108, 99, 255, 18))
+        glow = QColor(ACCENT)
+        glow.setAlpha(22)
+        painter.setBrush(glow)
         painter.setPen(Qt.NoPen)
         painter.drawEllipse(-80, -80, 420, 420)
-        painter.setBrush(QColor(78, 205, 196, 12))
+        glow2 = QColor(ACCENT)
+        glow2.setAlpha(14)
+        painter.setBrush(glow2)
         painter.drawEllipse(self.width() - 250, self.height() - 200, 400, 400)
 
 
@@ -87,7 +91,7 @@ class ModuleCard(QFrame):
 
     def _apply_style(self, hovered):
         border_color = ACCENT if hovered else BORDER
-        bg = "rgba(108,99,255,0.10)" if hovered else f"{CARD_BG}"
+        bg = "rgba(255,115,7,0.10)" if hovered else f"{CARD_BG}"
         self.setStyleSheet(f"""
             QFrame {{
                 background: {bg};
@@ -115,8 +119,8 @@ class MenuPanel(GradientBackground):
 
         # Header
         header = QHBoxLayout()
-        brand = QLabel("📖 BiblioApp")
-        brand.setFont(QFont("Segoe UI", 13, QFont.Bold))
+        brand = QLabel(f"Escuela Secundaria Tecnica No: 1 \nAndres Alvaro García")
+        brand.setFont(QFont("Segoe UI", 18, QFont.Bold))
         brand.setStyleSheet(f"color: {TEXT_PRIMARY};")
         header.addWidget(brand)
         header.addStretch()
@@ -124,8 +128,8 @@ class MenuPanel(GradientBackground):
         user_pill = QFrame()
         user_pill.setStyleSheet(f"""
             QFrame {{
-                background: rgba(108,99,255,0.10);
-                border: 1px solid {BORDER};
+                background: {ACCENT};
+                border: 1px solid {ACCENT_HOVER};
                 border-radius: 20px;
             }}
         """)
@@ -137,7 +141,7 @@ class MenuPanel(GradientBackground):
         pill_layout.addWidget(dot)
         email_lbl = QLabel(user_email)
         email_lbl.setFont(QFont("Segoe UI", 10))
-        email_lbl.setStyleSheet(f"color: {TEXT_MUTED};")
+        email_lbl.setStyleSheet("color: #FFFFFF;")
         pill_layout.addWidget(email_lbl)
         header.addWidget(user_pill)
 
@@ -146,11 +150,11 @@ class MenuPanel(GradientBackground):
         logout_btn.setFont(QFont("Segoe UI", 10))
         logout_btn.setStyleSheet(f"""
             QPushButton {{
-                background: transparent; color: {TEXT_MUTED};
-                border: 1px solid {BORDER}; border-radius: 8px;
+                background: {ACCENT}; color: #FFFFFF;
+                border: 1px solid {ACCENT_HOVER}; border-radius: 8px;
                 padding: 6px 14px; font-size: 12px; margin-left: 10px;
             }}
-            QPushButton:hover {{ color: #e24b4a; border-color: rgba(226,75,74,0.40); }}
+            QPushButton:hover {{ background: {ERROR}; border-color: {ERROR}; }}
         """)
         logout_btn.clicked.connect(on_logout)
         header.addWidget(logout_btn)
@@ -183,7 +187,7 @@ class MenuPanel(GradientBackground):
         crud_card = ModuleCard(
             icon="📚",
             title="Catálogo de Libros",
-            description="Agrega, edita y elimina libros del inventario. Consulta stock, categorías y autores disponibles.",
+            description="Agrega, edita y elimina libros del inventario. Consulta Cantidad, categorías y autores disponibles.",
             on_click=on_go_crud
         )
         cards_layout.addWidget(crud_card)
@@ -199,7 +203,7 @@ class MenuPanel(GradientBackground):
         layout.addLayout(cards_layout)
         layout.addStretch()
 
-        footer = QLabel("BiblioApp · Sistema de Gestión de Biblioteca")
+        footer = QLabel("Sistema de Gestión de Biblioteca Tecnica No: 1")
         footer.setFont(QFont("Segoe UI", 9))
         footer.setStyleSheet(f"color: {TEXT_MUTED}; font-size: 11px;")
         footer.setAlignment(Qt.AlignCenter)
@@ -267,7 +271,7 @@ class EmbeddedView(QWidget):
         # ── Barra superior con navegación ─────────────────────────────────────
         nav_bar = QWidget()
         nav_bar.setFixedHeight(54)
-        nav_bar.setStyleSheet(f"background: {CARD_BG}; border-bottom: 1px solid {BORDER};")
+        nav_bar.setStyleSheet(f"background: {ACCENT}; border-bottom: 1px solid {ACCENT_HOVER};")
         nav_layout = QHBoxLayout(nav_bar)
         nav_layout.setContentsMargins(16, 0, 16, 0)
         nav_layout.setSpacing(10)
@@ -278,11 +282,11 @@ class EmbeddedView(QWidget):
         back_btn.setFixedHeight(34)
         back_btn.setStyleSheet(f"""
             QPushButton {{
-                background: transparent; color: {TEXT_MUTED};
-                border: 1px solid {BORDER}; border-radius: 9px;
+                background: rgba(255,255,255,0.14); color: #FFFFFF;
+                border: 1px solid rgba(255,255,255,0.45); border-radius: 9px;
                 padding: 4px 20px; font-size: 14px;
             }}
-            QPushButton:hover {{ color: {TEXT_PRIMARY}; border-color: {TEXT_PRIMARY}; }}
+            QPushButton:hover {{ background: rgba(255,255,255,0.26); border-color: #FFFFFF; }}
         """)
         back_btn.clicked.connect(on_back)
         nav_layout.addWidget(back_btn)
@@ -290,18 +294,18 @@ class EmbeddedView(QWidget):
 
         user_lbl = QLabel(f"● {user_email}")
         user_lbl.setFont(QFont("Segoe UI", 9))
-        user_lbl.setStyleSheet(f"color: {TEXT_MUTED}; margin-right: 8px;")
+        user_lbl.setStyleSheet("color: rgba(255,255,255,0.9); margin-right: 8px;")
         nav_layout.addWidget(user_lbl)
 
         logout_btn = QPushButton("Cerrar sesión")
         logout_btn.setCursor(Qt.PointingHandCursor)
         logout_btn.setStyleSheet(f"""
             QPushButton {{
-                background: transparent; color: {TEXT_MUTED};
-                border: 1px solid {BORDER}; border-radius: 8px;
+                background: rgba(255,255,255,0.14); color: #FFFFFF;
+                border: 1px solid rgba(255,255,255,0.45); border-radius: 8px;
                 font-size: 11px; padding: 4px 12px;
             }}
-            QPushButton:hover {{ color: #e24b4a; border-color: #e24b4a; }}
+            QPushButton:hover {{ background: {ERROR}; border-color: {ERROR}; }}
         """)
         logout_btn.clicked.connect(on_logout)
         nav_layout.addWidget(logout_btn)
@@ -330,7 +334,7 @@ class EmbeddedView(QWidget):
 class MainWindow(QMainWindow):
     def __init__(self, initial_email=None, on_external_logout=None):
         super().__init__()
-        self.setWindowTitle("BiblioApp")
+        self.setWindowTitle("Secundaria Tecnica No: 1")
         self.setWindowFlags(Qt.FramelessWindowHint)
         self.setAttribute(Qt.WA_TranslucentBackground)
         self._drag_pos    = None
@@ -394,7 +398,7 @@ class MainWindow(QMainWindow):
         layout.setContentsMargins(12, 0, 8, 0)
         layout.setSpacing(4)
 
-        lbl = QLabel("BiblioApp")
+        lbl = QLabel("Tecnica No: 1")
         lbl.setFont(QFont("Segoe UI", 9))
         lbl.setStyleSheet(f"color: {TEXT_MUTED};")
         layout.addWidget(lbl)
@@ -403,7 +407,7 @@ class MainWindow(QMainWindow):
         for label, slot, hover in [
             ("─", self.showMinimized, TEXT_MUTED),
             ("□", self._toggle_max,   TEXT_MUTED),
-            ("✕", self.close,         "#e24b4a"),
+            ("✕", self.close,         ERROR),
         ]:
             btn = QPushButton(label)
             btn.setFixedSize(28, 22)
@@ -414,7 +418,7 @@ class MainWindow(QMainWindow):
                     background: transparent; color: {TEXT_MUTED};
                     border: none; border-radius: 4px;
                 }}
-                QPushButton:hover {{ background: rgba(255,255,255,0.08); color: {hover}; }}
+                QPushButton:hover {{ background: rgba(58,36,16,0.10); color: {hover}; }}
             """)
             btn.clicked.connect(slot)
             layout.addWidget(btn)

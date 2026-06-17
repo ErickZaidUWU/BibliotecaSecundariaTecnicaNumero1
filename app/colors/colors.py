@@ -1,13 +1,21 @@
-
 # ── Paleta de colores ──────────────────────────────────────────────────────────
-DARK_BG      = "#0D0D0F"
-CARD_BG      = "#16161A"
-BORDER       = "#2A2A35"
-ACCENT       = "#6C63FF"
-ACCENT_HOVER = "#8B85FF"
-ACCENT_GLOW  = "#6C63FF"
-TEXT_PRIMARY = "#F0EFF6"
-TEXT_MUTED   = "#7B7A8E"
-INPUT_BG     = "#1E1E26"
-SUCCESS      = "#4ECDC4"
-ERROR        = "#FF6B6B"
+# Fondo general
+DARK_BG      = "#FDD17B"
+
+# Superficies
+CARD_BG      = "#FFE8B8" 
+INPUT_BG     = "#FFF6E8"  
+BORDER       = "#F2B860"   
+
+# Acento 
+ACCENT       = "#FF7307"   
+ACCENT_HOVER = "#E05F00"  
+ACCENT_GLOW  = "#FFB066"   
+
+# Texto
+TEXT_PRIMARY = "#3A2410"  
+TEXT_MUTED   = "#8A5A22"  
+
+# Estados
+SUCCESS      = "#3C9A6E"  
+ERROR        = "#D9534F"  

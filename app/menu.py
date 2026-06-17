@@ -22,16 +22,20 @@ class GradientBackground(QWidget):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
         gradient = QLinearGradient(0, 0, self.width(), self.height())
-        gradient.setColorAt(0.0, QColor("#0D0D0F"))
-        gradient.setColorAt(0.5, QColor("#12101C"))
-        gradient.setColorAt(1.0, QColor("#0D1117"))
+        gradient.setColorAt(0.0, QColor(DARK_BG))
+        gradient.setColorAt(0.5, QColor(CARD_BG))
+        gradient.setColorAt(1.0, QColor(DARK_BG))
         painter.fillRect(self.rect(), QBrush(gradient))
 
-        painter.setBrush(QColor(108, 99, 255, 18))
+        glow = QColor(ACCENT)
+        glow.setAlpha(22)
+        painter.setBrush(glow)
         painter.setPen(Qt.NoPen)
         painter.drawEllipse(-80, -80, 380, 380)
 
-        painter.setBrush(QColor(78, 205, 196, 12))
+        glow2 = QColor(ACCENT)
+        glow2.setAlpha(14)
+        painter.setBrush(glow2)
         painter.drawEllipse(self.width() - 200, self.height() - 150, 350, 350)
 
 
@@ -98,10 +102,10 @@ class WelcomePanel(QWidget):
             QPushButton:hover {{
                 border-color: {ACCENT};
                 color: {ACCENT};
-                background: rgba(108,99,255,0.08);
+                background: rgba(255,115,7,0.08);
             }}
             QPushButton:pressed {{
-                background: rgba(108,99,255,0.16);
+                background: rgba(255,115,7,0.16);
             }}
         """)
         btn_register.clicked.connect(on_register)
@@ -158,7 +162,7 @@ class AuthWindow(QMainWindow):
                     border: none; font-size: 13px; border-radius: 6px;
                 }}
                 QPushButton:hover {{
-                    background: rgba(255,255,255,0.08); color: {TEXT_PRIMARY};
+                    background: rgba(58,36,16,0.10); color: {TEXT_PRIMARY};
                 }}
             """)
             tb_layout.addWidget(btn)
