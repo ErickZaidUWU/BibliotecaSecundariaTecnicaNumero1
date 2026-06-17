@@ -115,8 +115,8 @@ class MenuPanel(GradientBackground):
 
         # Header
         header = QHBoxLayout()
-        brand = QLabel(f"Escuela Secundaria Tecnica No: 1 \n'Andres Alvaro García'")
-        brand.setFont(QFont("Segoe UI", 18, QFont.Bold))
+        brand = QLabel("📖 BiblioApp")
+        brand.setFont(QFont("Segoe UI", 13, QFont.Bold))
         brand.setStyleSheet(f"color: {TEXT_PRIMARY};")
         header.addWidget(brand)
         header.addStretch()
@@ -328,13 +328,14 @@ class EmbeddedView(QWidget):
 
 # ── Ventana única de la aplicación ────────────────────────────────────────────
 class MainWindow(QMainWindow):
-    def __init__(self):
+    def __init__(self, initial_email=None, on_external_logout=None):
         super().__init__()
-        self.setWindowTitle("Secundaria Tecnica")
+        self.setWindowTitle("BiblioApp")
         self.setWindowFlags(Qt.FramelessWindowHint)
         self.setAttribute(Qt.WA_TranslucentBackground)
         self._drag_pos    = None
         self._user_email  = None
+        self._on_external_logout = on_external_logout
 
         # Vistas embebidas (se crean al hacer login para tener el email)
         self._crud_view  = None
@@ -371,8 +372,12 @@ class MainWindow(QMainWindow):
 
         self.setCentralWidget(self._root)
 
-        # Tamaño inicial: compacto para la pantalla de login
-        self._set_login_size()
+        if initial_email:
+            # Ya viene autenticado desde menu.py: saltar el login y abrir el menú
+            self._on_login_success(initial_email)
+        else:
+            # Tamaño inicial: compacto para la pantalla de login
+            self._set_login_size()
 
     # ─────────────────────────────────────────────────────────────────────────
     # Barra de título
@@ -515,6 +520,14 @@ class MainWindow(QMainWindow):
     def _on_logout(self):
         self._crud_view  = None
         self._loans_view = None
+
+        if self._on_external_logout:
+            # Esta ventana fue abierta desde menu.py tras un login externo:
+            # cerrar Inicio.py y devolver el control a la pantalla de menu.py
+            self.close()
+            self._on_external_logout()
+            return
+
         # Restaurar placeholders para el próximo login
         self._crud_placeholder  = QWidget()
         self._loans_placeholder = QWidget()

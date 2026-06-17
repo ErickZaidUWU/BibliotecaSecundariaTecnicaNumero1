@@ -13,7 +13,7 @@ from colors.colors import TEXT_PRIMARY, TEXT_MUTED, ACCENT, DARK_BG, CARD_BG, BO
 from componets.componets import PrimaryButton
 from login import LoginPanel
 from register import RegisterPanel
-from crud import LibraryCRUD          # ← importa la ventana CRUD
+from Inicio import MainWindow         # ← importa la ventana principal (menú + crud/loans)
 
 
 # ── Widget de fondo con gradiente ─────────────────────────────────────────────
@@ -206,12 +206,12 @@ class AuthWindow(QMainWindow):
     def _go_login(self):    self.stack.setCurrentIndex(1)
     def _go_register(self): self.stack.setCurrentIndex(2)
 
-    # ── Abrir CRUD tras login exitoso ──────────────────────────────────────────
+    # ── Abrir Inicio.py (menú principal) tras login exitoso ─────────────────────
     def _open_crud(self, email: str):
         self.hide()                         # oculta la ventana de auth
-        self._crud_window = LibraryCRUD(
-            user_email=email,
-            on_logout=self._on_logout       # al cerrar sesión vuelve al login
+        self._crud_window = MainWindow(
+            initial_email=email,
+            on_external_logout=self._on_logout   # al cerrar sesión vuelve al login de menu.py
         )
         self._crud_window.show()
 
