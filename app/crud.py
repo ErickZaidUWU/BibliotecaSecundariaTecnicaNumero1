@@ -170,7 +170,7 @@ class BookDialog(QDialog):
             self.inputs[label_text] = inp
 
         if book_data:
-            keys = ["Título", "Autor", "Año", "Categoría", "Stock"]
+            keys = ["Título", "Autor", "Año", "Categoría", "Cantidad"]
             for i, key in enumerate(keys):
                 self.inputs[key].setText(str(book_data[i]))
 
@@ -204,7 +204,7 @@ class BookDialog(QDialog):
 
     def _confirm(self):
         values = [self.inputs[k].text().strip() for k in
-                  ["Título", "Autor", "Año", "Categoría", "Stock"]]
+                  ["Título", "Autor", "Año", "Categoría", "Cantidad"]]
 
         if not all(values):
             self.msg.setText("⚠  Todos los campos son obligatorios.")
@@ -215,7 +215,7 @@ class BookDialog(QDialog):
             int(values[2])
             int(values[4])
         except ValueError:
-            self.msg.setText("⚠  Año y Stock deben ser números enteros.")
+            self.msg.setText("⚠  Año y Cantidad deben ser números enteros.")
             return
 
         self.result_data = values
@@ -230,7 +230,7 @@ class LibraryCRUD(QMainWindow):
         self.on_logout  = on_logout        
         self._drag_pos  = None
 
-        self.setWindowTitle("Biblioteca Técnica Nº1")
+        self.setWindowTitle("Biblioteca Secundaria Técnica Nº1")
         self.setMinimumSize(900, 620)
         self.setWindowFlags(Qt.FramelessWindowHint)
         self.setAttribute(Qt.WA_TranslucentBackground)
@@ -262,60 +262,6 @@ class LibraryCRUD(QMainWindow):
         main = QVBoxLayout(root)
         main.setContentsMargins(0, 0, 0, 0)
         main.setSpacing(0)
-
-        title_bar = QWidget()
-        title_bar.setFixedHeight(46)
-        title_bar.setStyleSheet("background: transparent;")
-        tb = QHBoxLayout(title_bar)
-        tb.setContentsMargins(20, 0, 14, 0)
-
-        logo = QLabel("◈  Biblioteca Técnica Nº1")
-        logo.setFont(QFont("Segoe UI", 11, QFont.Bold))
-        logo.setStyleSheet(f"color: {ACCENT};")
-        tb.addWidget(logo)
-
-        tb.addStretch()
-
-        user_lbl = QLabel(f"● {self.user_email}")
-        user_lbl.setFont(QFont("Segoe UI", 9))
-        user_lbl.setStyleSheet(f"color: {TEXT_MUTED}; margin-right: 8px;")
-        tb.addWidget(user_lbl)
-
-        logout_btn = QPushButton("Cerrar sesión")
-        logout_btn.setCursor(Qt.PointingHandCursor)
-        logout_btn.setStyleSheet(f"""
-            QPushButton {{
-                background: transparent; color: {TEXT_MUTED};
-                border: 1px solid {BORDER}; border-radius: 8px;
-                font-size: 11px; padding: 4px 12px;
-            }}
-            QPushButton:hover {{ color: #e24b4a; border-color: #e24b4a; }}
-        """)
-        logout_btn.clicked.connect(self._logout)
-        tb.addWidget(logout_btn)
-
-        for symbol, action in [("─", self.showMinimized), ("✕", self.close)]:
-            btn = QPushButton(symbol)
-            btn.setFixedSize(28, 28)
-            btn.setCursor(Qt.PointingHandCursor)
-            btn.clicked.connect(action)
-            btn.setStyleSheet(f"""
-                QPushButton {{
-                    background: transparent; color: {TEXT_MUTED};
-                    border: none; font-size: 13px; border-radius: 6px; margin-left: 4px;
-                }}
-                QPushButton:hover {{
-                    background: rgba(255,255,255,0.08); color: {TEXT_PRIMARY};
-                }}
-            """)
-            tb.addWidget(btn)
-
-        main.addWidget(title_bar)
-
-        sep = QFrame()
-        sep.setFixedHeight(1)
-        sep.setStyleSheet(f"background: {BORDER};")
-        main.addWidget(sep)
 
         body = QWidget()
         body_layout = QVBoxLayout(body)
@@ -401,7 +347,7 @@ class LibraryCRUD(QMainWindow):
 
         for icon, value, label in [
             ("📚", str(total_libros), "Títulos"),
-            ("📦", str(total_stock),  "Ejemplares"),
+            ("📦", str(total_stock),  "Libros"),
             ("🗂", str(categorias),   "Categorías"),
         ]:
             chip = QFrame()

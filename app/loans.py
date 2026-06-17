@@ -344,60 +344,6 @@ class LibraryLoans(QMainWindow):
         main.setContentsMargins(0, 0, 0, 0)
         main.setSpacing(0)
 
-        # Barra de título de la ventana
-        title_bar = QWidget()
-        title_bar.setFixedHeight(46)
-        tb = QHBoxLayout(title_bar)
-        tb.setContentsMargins(20, 0, 14, 0)
-
-        logo = QLabel("◈  Control de Préstamos")
-        logo.setFont(QFont("Segoe UI", 11, QFont.Bold))
-        logo.setStyleSheet(f"color: {ACCENT};")
-        tb.addWidget(logo)
-
-        tb.addStretch()
-
-        user_lbl = QLabel(f"● {self.user_email}")
-        user_lbl.setFont(QFont("Segoe UI", 9))
-        user_lbl.setStyleSheet(f"color: {TEXT_MUTED}; margin-right: 8px;")
-        tb.addWidget(user_lbl)
-
-        logout_btn = QPushButton("Cerrar sesión")
-        logout_btn.setCursor(Qt.PointingHandCursor)
-        logout_btn.setStyleSheet(f"""
-            QPushButton {{
-                background: transparent; color: {TEXT_MUTED};
-                border: 1px solid {BORDER}; border-radius: 8px;
-                font-size: 11px; padding: 4px 12px;
-            }}
-            QPushButton:hover {{ color: #e24b4a; border-color: #e24b4a; }}
-        """)
-        logout_btn.clicked.connect(self._logout)
-        tb.addWidget(logout_btn)
-
-        for symbol, action in [("─", self.showMinimized), ("✕", self.close)]:
-            btn = QPushButton(symbol)
-            btn.setFixedSize(28, 28)
-            btn.setCursor(Qt.PointingHandCursor)
-            btn.clicked.connect(action)
-            btn.setStyleSheet(f"""
-                QPushButton {{
-                    background: transparent; color: {TEXT_MUTED};
-                    border: none; font-size: 13px; border-radius: 6px; margin-left: 4px;
-                }}
-                QPushButton:hover {{
-                    background: rgba(255,255,255,0.08); color: {TEXT_PRIMARY};
-                }}
-            """)
-            tb.addWidget(btn)
-
-        main.addWidget(title_bar)
-
-        sep = QFrame()
-        sep.setFixedHeight(1)
-        sep.setStyleSheet(f"background: {BORDER};")
-        main.addWidget(sep)
-
         # Cuerpo Principal
         body = QWidget()
         body_layout = QVBoxLayout(body)
