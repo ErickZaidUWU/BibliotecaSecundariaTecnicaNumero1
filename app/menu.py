@@ -221,7 +221,7 @@ class AuthWindow(QMainWindow):
 
     def _on_logout(self):
         # Vuelve al login limpiando los campos
-        self.login.email_input.clear()
+        self.login.identity_input.clear()
         self.login.pass_input.clear()
         self.login.msg_label.setText("")
         self._go_login()

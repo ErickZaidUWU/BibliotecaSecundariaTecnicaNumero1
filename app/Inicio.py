@@ -68,6 +68,7 @@ class ModuleCard(QFrame):
         icon_lbl = QLabel(icon)
         icon_lbl.setFont(QFont("Segoe UI", 26))
         icon_lbl.setFixedWidth(40)
+
         top_row.addWidget(icon_lbl)
 
         title_lbl = QLabel(title)
@@ -537,7 +538,8 @@ class MainWindow(QMainWindow):
         self._loans_placeholder = QWidget()
         self._stack.insertWidget(PAGE_CRUD,  self._crud_placeholder)
         self._stack.insertWidget(PAGE_LOANS, self._loans_placeholder)
-        self._login_page.clear()
+        self._login_page.identity_input.clear()
+        self._login_page.pass_input.clear()
         self._stack.setCurrentIndex(PAGE_LOGIN)
         self._set_login_size()
 

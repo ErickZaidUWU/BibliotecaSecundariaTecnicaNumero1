@@ -117,9 +117,11 @@ class RegisterPanel(QWidget):
             # Si todo sale bien, mostrar éxito
             self.msg_label.setStyleSheet(f"color: {SUCCESS}; font-size: 12px;")
             self.msg_label.setText("✓ ¡Cuenta y perfil creados con éxito!")
+            self.msg_label.setText("Verifica tu correo para activar la cuenta, luego inicia sesión.")
             
         except Exception as e:
             self.msg_label.setStyleSheet(f"color: {ERROR}; font-size: 12px;")
             # Imprime en consola el error real por si llega a faltar apagar el RLS en la tabla profiles
             print("Error en registro:", str(e))
             self.msg_label.setText("⚠ Error al registrar el perfil en la base de datos.")
+            self.msg_label.setText("⚠ Favor de consultar con el sosporte.")

@@ -38,8 +38,8 @@ class GradientBackground(QWidget):
         glow2.setAlpha(14)
         painter.setBrush(glow2)
         painter.drawEllipse(self.width() - 250, self.height() - 200, 400, 400)
-
-
+ 
+ 
 # ── Estilos globales ──────────────────────────────────────────────────────────
 TABLE_STYLE = f"""
     QTableWidget {{
@@ -81,7 +81,7 @@ TABLE_STYLE = f"""
     }}
     QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{ height: 0; }}
 """
-
+ 
 INPUT_STYLE = f"""
     QLineEdit {{
         background: {INPUT_BG};
@@ -98,7 +98,7 @@ INPUT_STYLE = f"""
         color: {TEXT_MUTED};
     }}
 """
-
+ 
 BTN_DANGER = f"""
     QPushButton {{
         background: rgba(217,83,79,0.12);
@@ -114,7 +114,7 @@ BTN_DANGER = f"""
         border: 1px solid {ERROR};
     }}
 """
-
+ 
 BTN_ACCENT = f"""
     QPushButton {{
         background: rgba(255,115,7,0.15);
@@ -144,8 +144,8 @@ class BookDialog(QDialog):
         self.result_data = None  
 
         layout = QVBoxLayout(self)
-        layout.setSpacing(12)
-        layout.setContentsMargins(28, 24, 28, 24)
+        layout.setSpacing(8)
+        layout.setContentsMargins(20, 16, 20, 16)
 
         ttl = QLabel("Editar libro" if book_data else "Nuevo libro")
         ttl.setFont(QFont("Segoe UI", 16, QFont.Bold))
@@ -158,7 +158,10 @@ class BookDialog(QDialog):
             ("Autor",     "Ej: J.R.R. Tolkien"),
             ("Año",       "Ej: 1954"),
             ("Categoría", "Ej: Fantasía"),
-            ("Stock",     "Ej: 5"),
+            ("Edición",   "Ej: 2"),
+            ("Editorial", "Ej: Minotauro"),
+            ("ISBN",      "Ej: 9788445077528"),
+            ("Cantidad",     "Ej: 5"),
         ]
 
         self.inputs = {}
@@ -176,7 +179,7 @@ class BookDialog(QDialog):
             self.inputs[label_text] = inp
 
         if book_data:
-            keys = ["Título", "Autor", "Año", "Categoría", "Stock"]
+            keys = ["Título", "Autor", "Año", "Categoría", "Edición", "Editorial", "ISBN", "Cantidad"]
             for i, key in enumerate(keys):
                 self.inputs[key].setText(str(book_data[i]))
 
@@ -210,18 +213,18 @@ class BookDialog(QDialog):
 
     def _confirm(self):
         values = [self.inputs[k].text().strip() for k in
-                  ["Título", "Autor", "Año", "Categoría", "Stock"]]
+                  ["Título", "Autor", "Año", "Categoría", "Edición", "Editorial", "ISBN", "Cantidad"]]
 
         if not all(values):
             self.msg.setText("⚠  Todos los campos son obligatorios.")
             return
 
-        # Corrección de índices de validación (Año está en índice 2, Stock en índice 4)
+        # Corrección de índices de validación (Año está en índice 2, Edición en índice 4, Cantidad en índice 7, ISBN en índice 6)
         try:
             int(values[2])
-            int(values[4])
+            int(values[7])
         except ValueError:
-            self.msg.setText("⚠  Año y Stock deben ser números enteros.")
+            self.msg.setText("⚠  Año y Cantidad deben ser números enteros.")
             return
 
         self.result_data = values
@@ -256,6 +259,9 @@ class LibraryCRUD(QMainWindow):
                     b.get("author", ""),    
                     str(b.get("year", 0)),  
                     b.get("category", ""),  
+                    str(b.get("edition", 0)), 
+                    b.get("publisher", ""),  
+                    b.get("isbn", ""),  
                     str(b.get("stock", 0)), 
                 ])
         except Exception as e:
@@ -302,19 +308,20 @@ class LibraryCRUD(QMainWindow):
 
         # Ajustado a 6 columnas en total (Removido ISBN de la vista)
         self.table = QTableWidget()
-        self.table.setColumnCount(6)
+        self.table.setColumnCount(9)
         self.table.setHorizontalHeaderLabels(
-            ["Título", "Autor", "Año", "Categoría", "Stock", "Acciones"]
+            ["Título", "Autor", "Año", "Categoría", "Edición", "Editorial", "ISBN", "Cantidad", "Acciones"]
         )
         self.table.setStyleSheet(TABLE_STYLE)
         self.table.setSelectionBehavior(QTableWidget.SelectRows)
         self.table.setEditTriggers(QTableWidget.NoEditTriggers)
         self.table.setAlternatingRowColors(False)
         self.table.verticalHeader().setVisible(False)
+
         self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
         self.table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeToContents)
-        self.table.horizontalHeader().setSectionResizeMode(5, QHeaderView.Fixed)
-        self.table.setColumnWidth(5, 160)
+        self.table.horizontalHeader().setSectionResizeMode(8, QHeaderView.Fixed)
+        self.table.setColumnWidth(8, 160)
         self.table.setShowGrid(False)
         self.table.setFrameShape(QFrame.NoFrame)
         body_layout.addWidget(self.table)
@@ -348,12 +355,12 @@ class LibraryCRUD(QMainWindow):
 
         total_libros = len(self._books)
         # Corrección de índices para las operaciones de conteo matemático
-        total_stock  = sum(int(b[4]) for b in self._books) 
+        total_stock  = sum(int(b[7]) for b in self._books) 
         categorias   = len(set(b[3] for b in self._books)) 
 
         for icon, value, label in [
             ("📚", str(total_libros), "Títulos"),
-            ("📦", str(total_stock),  "Libros"),
+            ("📦", str(total_stock),  "Cantidad de Libros"),
             ("🗂", str(categorias),   "Categorías"),
         ]:
             chip = QFrame()
@@ -387,7 +394,7 @@ class LibraryCRUD(QMainWindow):
             for col, val in enumerate(book):
                 item = QTableWidgetItem(str(val))
                 item.setForeground(QColor(TEXT_PRIMARY))
-                if col == 4 and int(val) == 0:
+                if col == 7 and int(val) == 0:
                     item.setForeground(QColor(ERROR))
                 self.table.setItem(row, col, item)
 
@@ -410,7 +417,7 @@ class LibraryCRUD(QMainWindow):
             del_btn.clicked.connect(lambda _, r=row: self._delete_book(r))
             action_layout.addWidget(del_btn)
 
-            self.table.setCellWidget(row, 5, action_widget)
+            self.table.setCellWidget(row, 8, action_widget)
 
     def _filter_table(self, text):
         q = text.lower()
@@ -430,7 +437,10 @@ class LibraryCRUD(QMainWindow):
                 "author": dlg.result_data[1],
                 "year": int(dlg.result_data[2]),
                 "category": dlg.result_data[3],
-                "stock": int(dlg.result_data[4])
+                "edition": int(dlg.result_data[4]),  # NUEVO
+                "publisher": dlg.result_data[5],     # NUEVO
+                "isbn": dlg.result_data[6],          # NUEVO
+                "stock": int(dlg.result_data[7])     # Actualizado índice a 7
             }
             try:
                 supabase.table("books").insert(new_book).execute()
@@ -447,7 +457,7 @@ class LibraryCRUD(QMainWindow):
         except ValueError:
             real_idx = row
 
-        dlg = BookDialog(self, book_data=self._books[real_idx][:5])
+        dlg = BookDialog(self, book_data=self._books[real_idx][:8])
         if dlg.exec_() == QDialog.Accepted and dlg.result_data:
             # Tu llave primaria en Supabase es el título ('name')
             book_name = self._books[real_idx][0] 
@@ -457,7 +467,10 @@ class LibraryCRUD(QMainWindow):
                 "author": dlg.result_data[1],
                 "year": int(dlg.result_data[2]),
                 "category": dlg.result_data[3],
-                "stock": int(dlg.result_data[4])
+                "edition": dlg.result_data[4],  # NUEVO
+                "publisher": dlg.result_data[5],     # NUEVO
+                "isbn": dlg.result_data[6],          # NUEVO
+                "stock": int(dlg.result_data[7])     # Actualizado índice a 7
             }
             try:
                 supabase.table("books").update(updated_data).eq("name", book_name).execute()
