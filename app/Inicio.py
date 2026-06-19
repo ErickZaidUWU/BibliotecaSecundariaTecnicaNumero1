@@ -1,3 +1,4 @@
+import os
 import sys
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout,
@@ -7,7 +8,7 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import (
     QFont, QColor, QPalette, QLinearGradient,
-    QBrush, QPainter
+    QBrush, QPainter, QPixmap
 )
 
 from colors.colors import (
@@ -26,6 +27,20 @@ PAGE_LOGIN = 0
 PAGE_MENU  = 1
 PAGE_CRUD  = 2
 PAGE_LOANS = 3
+
+
+def resource_path(filename):
+    """
+    Devuelve la ruta absoluta de un recurso (ej. imgs/logo.jpg) ubicado junto
+    a este script. Si usas PyInstaller, esto también funciona empaquetado
+    con --add-data, ya que respeta sys._MEIPASS cuando existe.
+
+    Ejemplo para incluir la carpeta imgs al compilar con PyInstaller:
+        --add-data "imgs:imgs"        (Linux/Mac)
+        --add-data "imgs;imgs"        (Windows)
+    """
+    base_path = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
+    return os.path.join(base_path, filename)
 
 
 # ── Fondo con gradiente ───────────────────────────────────────────────────────
@@ -118,12 +133,24 @@ class MenuPanel(GradientBackground):
         layout.setContentsMargins(60, 50, 60, 50)
         layout.setSpacing(0)
 
-        # Header
+        # Header (logo + nombre a la izquierda, correo + cerrar sesión a la derecha)
         header = QHBoxLayout()
-        brand = QLabel(f"Escuela Secundaria Tecnica No: 1 \nAndres Alvaro García")
-        brand.setFont(QFont("Segoe UI", 18, QFont.Bold))
+        header.setSpacing(14)
+
+        # Logo (antes del nombre de la escuela)
+        logo_lbl = QLabel()
+        logo_pix = QPixmap(resource_path(os.path.join("imgs", "logo.png")))
+        if not logo_pix.isNull():
+            logo_lbl.setPixmap(
+                logo_pix.scaledToHeight(200, Qt.SmoothTransformation)
+            )
+            header.addWidget(logo_lbl, 0, Qt.AlignVCenter)
+        # Si no se encuentra el logo simplemente no se muestra nada.
+
+        brand = QLabel(f"Escuela Secundaria Técnica No: 1 \nÁndres Álvaro García")
+        brand.setFont(QFont("Segoe UI", 42, QFont.Bold))
         brand.setStyleSheet(f"color: {TEXT_PRIMARY};")
-        header.addWidget(brand)
+        header.addWidget(brand, 0, Qt.AlignVCenter)
         header.addStretch()
 
         user_pill = QFrame()
@@ -144,7 +171,7 @@ class MenuPanel(GradientBackground):
         email_lbl.setFont(QFont("Segoe UI", 10))
         email_lbl.setStyleSheet("color: #FFFFFF;")
         pill_layout.addWidget(email_lbl)
-        header.addWidget(user_pill)
+        header.addWidget(user_pill, 0, Qt.AlignVCenter)
 
         logout_btn = QPushButton("Cerrar sesión")
         logout_btn.setCursor(Qt.PointingHandCursor)
@@ -158,13 +185,14 @@ class MenuPanel(GradientBackground):
             QPushButton:hover {{ background: {ERROR}; border-color: {ERROR}; }}
         """)
         logout_btn.clicked.connect(on_logout)
-        header.addWidget(logout_btn)
+        header.addWidget(logout_btn, 0, Qt.AlignVCenter)
 
         layout.addLayout(header)
         layout.addSpacing(60)
 
+        # Tamaño invertido: ahora 18pt (antes era el de "Secundaria...")
         greeting = QLabel("¡Bienvenido de nuevo!")
-        greeting.setFont(QFont("Segoe UI", 28, QFont.Bold))
+        greeting.setFont(QFont("Segoe UI", 18, QFont.Bold))
         greeting.setStyleSheet(f"color: {TEXT_PRIMARY};")
         layout.addWidget(greeting)
 
