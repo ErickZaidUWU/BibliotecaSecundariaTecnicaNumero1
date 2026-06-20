@@ -1,8 +1,12 @@
 import sys
+from collections import Counter
+from docx import Document
+from docx.shared import Inches, Pt
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QPushButton, QLabel, QLineEdit, QFrame, QTableWidget, 
-    QTableWidgetItem, QHeaderView, QDialog, QMessageBox, QComboBox, QDateEdit
+    QTableWidgetItem, QHeaderView, QDialog, QMessageBox, QComboBox, QDateEdit,
+    QFileDialog
 )
 from PyQt5.QtCore import Qt, QTimer, QDate
 from PyQt5.QtGui import (
@@ -145,6 +149,88 @@ CALENDAR_STYLE = f"""
         color: {TEXT_PRIMARY};
     }}
 """
+
+
+# ── Diálogo: Configurar Reporte en Word ───────────────────────────────────────
+class ReportDialog(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Generar Reporte de Préstamos")
+        self.setFixedWidth(360)
+        self.setModal(True)
+        self.setStyleSheet(f"background: {CARD_BG}; border-radius: 14px;")
+        
+        self.start_date = None
+        self.end_date = None
+
+        layout = QVBoxLayout(self)
+        layout.setSpacing(12)
+        layout.setContentsMargins(24, 20, 24, 20)
+
+        ttl = QLabel("Reporte por Rango de Fechas")
+        ttl.setFont(QFont("Segoe UI", 14, QFont.Bold))
+        ttl.setStyleSheet(f"color: {TEXT_PRIMARY};")
+        layout.addWidget(ttl)
+
+        # Fecha Inicial
+        lbl_start = QLabel("Fecha de Inicio")
+        lbl_start.setStyleSheet(f"color: {TEXT_MUTED}; font-size: 12px;")
+        layout.addWidget(lbl_start)
+        
+        self.start_edit = QDateEdit()
+        self.start_edit.setFixedHeight(40)
+        self.start_edit.setStyleSheet(INPUT_STYLE)
+        self.start_edit.setCalendarPopup(True)
+        self.start_edit.setDisplayFormat("yyyy-MM-dd")
+        self.start_edit.setDate(QDate.currentDate().addDays(-30))  # Un mes atrás por defecto
+        self.start_edit.calendarWidget().setStyleSheet(CALENDAR_STYLE)
+        layout.addWidget(self.start_edit)
+
+        # Fecha Final
+        lbl_end = QLabel("Fecha Fin")
+        lbl_end.setStyleSheet(f"color: {TEXT_MUTED}; font-size: 12px;")
+        layout.addWidget(lbl_end)
+        
+        self.end_edit = QDateEdit()
+        self.end_edit.setFixedHeight(40)
+        self.end_edit.setStyleSheet(INPUT_STYLE)
+        self.end_edit.setCalendarPopup(True)
+        self.end_edit.setDisplayFormat("yyyy-MM-dd")
+        self.end_edit.setDate(QDate.currentDate())
+        self.end_edit.calendarWidget().setStyleSheet(CALENDAR_STYLE)
+        layout.addWidget(self.end_edit)
+
+        # Botones
+        btn_row = QHBoxLayout()
+        btn_row.setSpacing(10)
+
+        cancel = QPushButton("Cancelar")
+        cancel.setFixedHeight(40)
+        cancel.setCursor(Qt.PointingHandCursor)
+        cancel.setStyleSheet(f"""
+            QPushButton {{
+                background: transparent; color: {TEXT_MUTED};
+                border: 1px solid {BORDER}; border-radius: 10px; font-size: 13px;
+            }}
+            QPushButton:hover {{ color: {TEXT_PRIMARY}; border-color: {TEXT_MUTED}; }}
+        """)
+        cancel.clicked.connect(self.reject)
+        btn_row.addWidget(cancel)
+
+        confirm = PrimaryButton("Generar Word")
+        confirm.setFixedHeight(40)
+        confirm.clicked.connect(self._confirm)
+        btn_row.addWidget(confirm)
+
+        layout.addLayout(btn_row)
+
+    def _confirm(self):
+        self.start_date = self.start_edit.date().toString("yyyy-MM-dd")
+        self.end_date = self.end_edit.date().toString("yyyy-MM-dd")
+        if self.start_date > self.end_date:
+            QMessageBox.warning(self, "Error de Fechas", "La fecha de inicio no puede ser posterior a la fecha fin.")
+            return
+        self.accept()
 
 # ── Diálogo: Registrar / Editar Préstamo ──────────────────────────────────────
 class LoanDialog(QDialog):
@@ -323,8 +409,8 @@ class LibraryLoans(QMainWindow):
 
     def _load_data_from_supabase(self):
         try:
-            # 1. Cargar Préstamos
-            response = supabase.table("loans").select("*").execute()
+            # Filtramos para traer únicamente los que siguen vigentes/activos
+            response = supabase.table("loans").select("*").eq("state_loan", "Activo").execute()
             self._loans = []
             for l in response.data:
                 self._loans.append([
@@ -333,14 +419,15 @@ class LibraryLoans(QMainWindow):
                     l.get("grade_group", ""),
                     l.get("loan_date", ""),
                     l.get("return_date", ""),
+                    l.get("state_loan", "Activo"),
                 ])
                 
-            # 2. Cargar libros para el selector del diálogo
             book_resp = supabase.table("books").select("name").execute()
             self._available_books = [b.get("name") for b in book_resp.data if b.get("name")]
             
         except Exception as e:
             self._show_toast(f"❌ Error de red: {str(e)}")
+
 
     def _build_ui(self):
         root = GradientBackground()
@@ -363,6 +450,14 @@ class LibraryLoans(QMainWindow):
         header_row.addWidget(h_title)
         header_row.addStretch()
 
+        # --- BOTÓN DE REPORTE ---
+        report_btn = QPushButton("📄 Generar Reporte")
+        report_btn.setFixedHeight(40)
+        report_btn.setCursor(Qt.PointingHandCursor)
+        report_btn.setStyleSheet(BTN_ACCENT) # Reutiliza tu estilo accent existente
+        report_btn.clicked.connect(self._generate_report)
+        header_row.addWidget(report_btn)
+
         add_btn = PrimaryButton("＋  Registrar Préstamo")
         add_btn.setFixedHeight(40)
         add_btn.clicked.connect(self._add_loan)
@@ -384,11 +479,11 @@ class LibraryLoans(QMainWindow):
         self.stats_row.setSpacing(12)
         body_layout.addLayout(self.stats_row)
 
-        # Tabla de Préstamos configurada a 6 columnas
+        # Tabla de Préstamos configurada a 7 columnas
         self.table = QTableWidget()
-        self.table.setColumnCount(6)
+        self.table.setColumnCount(7)
         self.table.setHorizontalHeaderLabels(
-            ["Libro Prestado", "Alumno", "Grado y Grupo", "F. Salida", "F. Devolución", "Acciones"]
+            ["Libro Prestado", "Alumno", "Grado y Grupo", "F. Salida", "F. Devolución", "Estado", "Acciones"]
         )
         self.table.setStyleSheet(TABLE_STYLE)
         self.table.setSelectionBehavior(QTableWidget.SelectRows)
@@ -396,8 +491,12 @@ class LibraryLoans(QMainWindow):
         self.table.verticalHeader().setVisible(False)
         self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
         self.table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeToContents)
-        self.table.horizontalHeader().setSectionResizeMode(5, QHeaderView.Fixed)
-        self.table.setColumnWidth(5, 160)
+        self.table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
+        self.table.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeToContents)
+        self.table.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeToContents)
+        self.table.horizontalHeader().setSectionResizeMode(5, QHeaderView.ResizeToContents)
+        self.table.horizontalHeader().setSectionResizeMode(6, QHeaderView.Fixed)
+        self.table.setColumnWidth(6, 170)
         self.table.setShowGrid(False)
         self.table.setFrameShape(QFrame.NoFrame)
         body_layout.addWidget(self.table)
@@ -425,6 +524,133 @@ class LibraryLoans(QMainWindow):
         self._refresh_table()
         self._refresh_stats()
 
+    def _generate_report(self):
+        dlg = ReportDialog(self)
+        if dlg.exec_() != QDialog.Accepted:
+            return
+
+        start_f = dlg.start_date
+        end_f = dlg.end_date
+
+        # 1. Consultar a Supabase filtrando por el rango de fechas (trae tanto Activos como Devueltos)
+        try:
+            response = supabase.table("loans")\
+                .select("*")\
+                .gte("loan_date", start_f)\
+                .lte("loan_date", end_f)\
+                .execute()
+            
+            report_data = response.data
+        except Exception as e:
+            self._show_toast("❌ Error al obtener datos de la nube.")
+            return
+
+        if not report_data:
+            QMessageBox.information(self, "Reporte Vacío", f"No se encontraron préstamos entre {start_f} y {end_f}.")
+            return
+
+        # 2. Abrir cuadro de diálogo para guardar el archivo Word
+        file_path, _ = QFileDialog.getSaveFileName(
+            self, "Guardar Reporte", f"Reporte_Prestamos_{start_f}_a_{end_f}.docx", "Word Files (*.docx)"
+        )
+        if not file_path:
+            return
+
+        # 3. Procesar estadísticas
+        total_libros = len(report_data)
+        libros_lista = [loan.get("book_title", "Desconocido") for loan in report_data]
+        conteo_libros = Counter(libros_lista)
+        
+        # Obtener los 3 libros más prestados
+        mas_prestados = conteo_libros.most_common(3)
+
+        # ── Conteo de Grupos con más préstamos ──
+        grupos_lista = [loan.get("grade_group", "Desconocido") for loan in report_data if loan.get("grade_group")]
+        conteo_grupos = Counter(grupos_lista)
+        grupos_mas_activos = conteo_grupos.most_common(3) # Obtiene los top 3 grupos
+
+        # 4. Construir el documento de Word utilizando python-docx
+        try:
+            doc = Document()
+            
+            # Título Principal
+            title = doc.add_paragraph()
+            title_run = title.add_run("REPORTE DE PRÉSTAMOS DE BIBLIOTECA")
+            title_run.font.name = 'Segoe UI'
+            title_run.font.size = Pt(20)
+            title_run.font.bold = True
+            title.alignment = 1 # Centrado
+
+            # Subtítulo con Periodo
+            sub = doc.add_paragraph()
+            sub_run = sub.add_run(f"Periodo evaluado: del {start_f} al {end_f}")
+            sub_run.font.name = 'Segoe UI'
+            sub_run.font.size = Pt(12)
+            sub_run.font.italic = True
+            sub.alignment = 1
+
+            doc.add_paragraph("\n")
+
+            # Sección de Estadísticas
+            h_stats = doc.add_heading(level=1)
+            h_stats_run = h_stats.add_run("1. Estadísticas Generales")
+            h_stats_run.font.name = 'Segoe UI'
+
+            p_total = doc.add_paragraph()
+            p_total.add_run("• Total de libros prestados en el periodo: ").bold = True
+            p_total.add_run(str(total_libros))
+
+            p_top = doc.add_paragraph()
+            p_top.add_run("• Libros más solicitados:").bold = True
+            for rank, (book_name, freq) in enumerate(mas_prestados, 1):
+                p_top_item = doc.add_paragraph(style='List Bullet')
+                p_top_item.add_run(f"{book_name}: ").bold = True
+                p_top_item.add_run(f"{freq} préstamos")
+
+            p_groups = doc.add_paragraph()
+            p_groups.add_run("• Grados y Grupos con mayor cantidad de préstamos:").bold = True
+            for rank, (group_name, freq) in enumerate(grupos_mas_activos, 1):
+                p_group_item = doc.add_paragraph(style='List Bullet')
+                p_group_item.add_run(f"{group_name}: ").bold = True
+                p_group_item.add_run(f"{freq} libros solicitados")
+
+
+            doc.add_paragraph("\n")
+
+            # Sección de Tabla con el desglose de datos
+            h_table = doc.add_heading(level=1)
+            h_table_run = h_table.add_run("2. Desglose Detallado de Préstamos")
+            h_table_run.font.name = 'Segoe UI'
+
+            # CAMBIO: Incrementamos a 6 columnas en el documento Word
+            table = doc.add_table(rows=1, cols=6)
+            table.style = 'Light Shading Accent 1'
+
+            hdr_cells = table.rows[0].cells
+            hdr_cells[0].text = 'Libro Prestado'
+            hdr_cells[1].text = 'Alumno'
+            hdr_cells[2].text = 'Grado y Grupo'
+            hdr_cells[3].text = 'F. Salida'
+            hdr_cells[4].text = 'F. Devolución'
+            hdr_cells[5].text = 'Estado del Préstamo' # <- Nueva columna en el reporte
+
+            # Rellenar filas desde los datos crudos de Supabase
+            for loan in report_data:
+                row_cells = table.add_row().cells
+                row_cells[0].text = str(loan.get("book_title", ""))
+                row_cells[1].text = str(loan.get("student_name", ""))
+                row_cells[2].text = str(loan.get("grade_group", ""))
+                row_cells[3].text = str(loan.get("loan_date", ""))
+                row_cells[4].text = str(loan.get("return_date", ""))
+                row_cells[5].text = str(loan.get("state_loan", "Activo")) # <- Mapea el estado actual
+
+            # Guardar el archivo
+            doc.save(file_path)
+            self._show_toast("✓ Reporte en Word generado con éxito.")
+            
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"No se pudo guardar el archivo Word:\n{str(e)}")
+    
     def _refresh_stats(self):
         while self.stats_row.count():
             item = self.stats_row.takeAt(0)
@@ -463,15 +689,28 @@ class LibraryLoans(QMainWindow):
 
         for row, loan in enumerate(loans):
             self.table.setRowHeight(row, 48)
-            for col, val in enumerate(loan):
-                item = QTableWidgetItem(str(val))
+            
+            # Columna 0 a 4: Libro, Alumno, Grado, F. Salida y F. Devolución
+            for col in range(5):
+                item = QTableWidgetItem(str(loan[col]))
                 item.setForeground(QColor(TEXT_PRIMARY))
-                
-                # Resaltar en rojo si la fecha de devolución ya venció
-                if col == 4 and str(val) < hoy:
-                    item.setForeground(QColor(ERROR))
                 self.table.setItem(row, col, item)
 
+            # ── COLUMNA 5: Estado de Tiempo Dinámico ─────────────────────────
+            return_date_str = str(loan[4])
+            state_item = QTableWidgetItem()
+            state_item.setFont(QFont("Segoe UI", 12, QFont.Bold))
+            
+            if return_date_str < hoy:
+                state_item.setText("⚠️ Atrasado")
+                state_item.setForeground(QColor(ERROR))
+            else:
+                state_item.setText("⏳ En curso")
+                state_item.setForeground(QColor(SUCCESS))
+                
+            self.table.setItem(row, 5, state_item)
+
+            # ── COLUMNA 6: Botones de Acción ─────────────────────────────────
             action_widget = QWidget()
             action_layout = QHBoxLayout(action_widget)
             action_layout.setContentsMargins(8, 4, 8, 4)
@@ -491,15 +730,28 @@ class LibraryLoans(QMainWindow):
             del_btn.clicked.connect(lambda _, r=row: self._delete_loan(r))
             action_layout.addWidget(del_btn)
 
-            self.table.setCellWidget(row, 5, action_widget)
+            # El contenedor se asigna estrictamente en la columna 6
+            self.table.setCellWidget(row, 6, action_widget)
 
     def _filter_table(self, text):
         q = text.lower()
         if not q:
             self._refresh_table()
             return
-        filtered = [l for l in self._loans
-                    if q in l[0].lower() or q in l[1].lower() or q in l[2].lower()]
+            
+        hoy = QDate.currentDate().toString("yyyy-MM-dd")
+        filtered = []
+        
+        for l in self._loans:
+            estado_visual = "atrasado" if l[4] < hoy else "en curso"
+            
+            if (q in l[0].lower() or 
+                q in l[1].lower() or 
+                q in l[2].lower() or 
+                q in l[4].lower() or 
+                q in estado_visual):
+                filtered.append(l)
+                
         self._refresh_table(filtered)
 
     def _add_loan(self):
@@ -560,7 +812,7 @@ class LibraryLoans(QMainWindow):
 
         mb = QMessageBox(self)
         mb.setWindowTitle("Finalizar Préstamo")
-        mb.setText(f"¿Dar por devuelto el libro «{book}» de {student}?\nSe eliminará del registro activo.")
+        mb.setText(f"¿Dar por devuelto el libro «{book}» de {student}?\nSe eliminará del registro.")
         mb.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
         mb.setDefaultButton(QMessageBox.No)
         mb.setStyleSheet(f"""
@@ -570,11 +822,30 @@ class LibraryLoans(QMainWindow):
         """)
         if mb.exec_() == QMessageBox.Yes:
             try:
-                supabase.table("loans").delete().eq("student_name", student).eq("book_title", book).execute()
-                self._load_data_from_supabase()
-                self._refresh_table()
+                # 1. Actualizar el estado en Supabase a "Devuelto" (No se elimina de la BD)
+                supabase.table("loans")\
+                    .update({"state_loan": "Devuelto"})\
+                    .eq("student_name", student)\
+                    .eq("book_title", book)\
+                    .execute()
+                
+                # 2. Encontrar y remover el registro de la lista local en memoria (self._loans)
+                # Buscamos el elemento que coincida con el alumno y el libro
+                for index, loan in enumerate(self._loans):
+                    if loan[0] == book and loan[1] == student:
+                        self._loans.pop(index)
+                        break
+
+                # 3. Remover la fila directamente de la interfaz visual sin recargar de la nube
+                self.table.removeRow(row)
+                
+                # 4. Actualizar las estadísticas de la barra superior e informar al usuario
                 self._refresh_stats()
-                self._show_toast("🗑 Libro marcado como devuelto con éxito.")
+                self._show_toast("🗑 Libro marcado como devuelto y quitado de la vista.")
+                
+                # NOTA IMPORTANTE:
+                # Quitamos la línea self._load_data_from_supabase() para evitar que vuelva a traer los devueltos.
+                
             except Exception as e:
                 self._show_toast("❌ Error al procesar la devolución.")
 

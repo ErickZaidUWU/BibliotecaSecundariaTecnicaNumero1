@@ -45,7 +45,7 @@ class RegisterPanel(QWidget):
         layout.addWidget(title)
 
         sub = QLabel("Completa el formulario para registrarte")
-        sub.setFont(QFont("Segoe UI", 10))
+        sub.setFont(QFont("Segoe UI", 8))
         sub.setStyleSheet(f"color: {TEXT_MUTED}; margin-bottom: 4px;")
         layout.addWidget(sub)
 

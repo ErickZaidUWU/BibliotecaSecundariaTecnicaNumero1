@@ -39,8 +39,8 @@ class LoginPanel(QWidget):
         layout.addWidget(title)
 
         sub = QLabel("Ingresa tus credenciales para continuar")
-        sub.setFont(QFont("Segoe UI", 10))
-        sub.setStyleSheet(f"color: {TEXT_MUTED}; margin-bottom: 8px;")
+        sub.setFont(QFont("Segoe UI", 8))
+        sub.setStyleSheet(f"color: {TEXT_MUTED}; margin-bottom: 6px;")
         layout.addWidget(sub)
 
         # 1. CAMBIO: Etiqueta mixta para Correo o Usuario
@@ -50,7 +50,7 @@ class LoginPanel(QWidget):
         layout.addWidget(lbl_identity)
         
         # Campo de texto que aceptará ambos valores
-        self.identity_input = StyledInput("usuario@ejemplo.com o tu_usuario")
+        self.identity_input = StyledInput("usuario@ejemplo.com o usuario")
         layout.addWidget(self.identity_input)
 
         lbl_pass = QLabel("Contraseña")

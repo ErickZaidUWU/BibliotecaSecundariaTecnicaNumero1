@@ -63,7 +63,7 @@ class WelcomePanel(QWidget):
         title = QLabel("Bienvenid@")
         title.setAlignment(Qt.AlignCenter)
         title.setFont(QFont("Segoe UI", 26, QFont.Bold))
-        title.setStyleSheet(f"color: {TEXT_PRIMARY}; letter-spacing: -0.5px;")
+        title.setStyleSheet(f"color: {TEXT_PRIMARY}; letter-spacing: -0.9px;")
         layout.addWidget(title)
 
         subtitle = QLabel("¿Qué deseas hacer hoy?")
@@ -120,8 +120,8 @@ class WelcomePanel(QWidget):
 
         footer = QLabel("Sistema de Gestión de Biblioteca Técnica Nº1")
         footer.setAlignment(Qt.AlignCenter)
-        footer.setFont(QFont("Segoe UI", 9))
-        footer.setStyleSheet(f"color: {TEXT_MUTED}; margin-top: 12px;")
+        footer.setFont(QFont("Segoe UI", 8))
+        footer.setStyleSheet(f"color: {TEXT_MUTED}; margin-top: 20px;")
         layout.addWidget(footer)
 
 
@@ -130,7 +130,7 @@ class AuthWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Autenticación")
-        self.setFixedSize(sc(420), sc(580))
+        self.setFixedSize(sc(500), sc(850))
         self.setWindowFlags(Qt.FramelessWindowHint)
         self.setAttribute(Qt.WA_TranslucentBackground)
         self._drag_pos = None
@@ -139,7 +139,7 @@ class AuthWindow(QMainWindow):
 
     def _build_ui(self):
         root = GradientBackground()
-        root.setFixedSize(sc(420), sc(580))
+        root.setFixedSize(sc(500), sc(850))
         self.setCentralWidget(root)
 
         outer = QVBoxLayout(root)
@@ -162,6 +162,7 @@ class AuthWindow(QMainWindow):
             btn = QPushButton(symbol)
             btn.setFixedSize(28, 28)
             btn.setCursor(Qt.PointingHandCursor)
+
             btn.clicked.connect(action)
             btn.setStyleSheet(f"""
                 QPushButton {{
@@ -193,7 +194,7 @@ class AuthWindow(QMainWindow):
         card.setGraphicsEffect(shadow)
 
         card_layout = QVBoxLayout(card)
-        card_layout.setContentsMargins(36, 32, 36, 32)
+        card_layout.setContentsMargins(20, 36, 20, 36)
 
         # Stack de paneles
         self.stack = QStackedWidget()
@@ -209,8 +210,8 @@ class AuthWindow(QMainWindow):
         outer.addWidget(card, alignment=Qt.AlignCenter)
         outer.addStretch()
 
-        card.setFixedWidth(sc(348))
-        card.setMinimumHeight(sc(460))
+        card.setFixedWidth(sc(410))
+        card.setMinimumHeight(sc(680))
 
     # ── Navegación ─────────────────────────────────────────────────────────────
     def _go_welcome(self):  self.stack.setCurrentIndex(0)
