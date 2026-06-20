@@ -43,6 +43,47 @@ def resource_path(filename):
     return os.path.join(base_path, filename)
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Escalado relativo a la pantalla
+# ─────────────────────────────────────────────────────────────────────────────
+# El diseño se ajustó visualmente usando una pantalla de referencia de 1920×1080.
+# Esta función traduce cualquier tamaño "diseñado" para esa referencia a un
+# tamaño equivalente en la pantalla real del equipo que ejecuta la app, para
+# que la ventana y sus textos/íconos se vean proporcionalmente iguales sin
+# importar la resolución o el factor de escala del monitor.
+_REFERENCE_WIDTH  = 1920
+_REFERENCE_HEIGHT = 1080
+_MIN_SCALE = 0.6   # no encoger más allá del 60% en pantallas muy pequeñas
+_MAX_SCALE = 1.3   # no agrandar más allá del 130% en pantallas muy grandes
+
+
+def screen_scale_factor():
+    """
+    Devuelve un factor de escala (float) calculado a partir del tamaño de
+    pantalla disponible actual comparado con la resolución de referencia.
+    Se limita entre _MIN_SCALE y _MAX_SCALE para evitar extremos.
+    """
+    try:
+        screen = QApplication.primaryScreen().availableGeometry()
+        scale_w = screen.width()  / _REFERENCE_WIDTH
+        scale_h = screen.height() / _REFERENCE_HEIGHT
+        scale = min(scale_w, scale_h)
+    except Exception:
+        scale = 1.0
+    return max(_MIN_SCALE, min(_MAX_SCALE, scale))
+
+
+def sc(value):
+    """Escala un tamaño en píxeles (int) según el factor de pantalla actual."""
+    return int(round(value * screen_scale_factor()))
+
+
+def sc_font(value):
+    """Escala un tamaño de fuente (puntos) según el factor de pantalla actual,
+    sin bajar de 7pt para mantener legibilidad."""
+    return max(7, int(round(value * screen_scale_factor())))
+
+
 # ── Fondo con gradiente ───────────────────────────────────────────────────────
 class GradientBackground(QWidget):
     def paintEvent(self, event):
@@ -70,7 +111,7 @@ class ModuleCard(QFrame):
         super().__init__(parent)
         self.on_click = on_click
         self.setCursor(Qt.PointingHandCursor)
-        self.setFixedHeight(130)
+        self.setMinimumHeight(sc(130))
         self._apply_style(False)
 
         layout = QVBoxLayout(self)
@@ -142,13 +183,13 @@ class MenuPanel(GradientBackground):
         logo_pix = QPixmap(resource_path(os.path.join("imgs", "logo.png")))
         if not logo_pix.isNull():
             logo_lbl.setPixmap(
-                logo_pix.scaledToHeight(200, Qt.SmoothTransformation)
+                logo_pix.scaledToHeight(sc(200), Qt.SmoothTransformation)
             )
             header.addWidget(logo_lbl, 0, Qt.AlignVCenter)
         # Si no se encuentra el logo simplemente no se muestra nada.
 
         brand = QLabel(f"Escuela Secundaria Técnica No: 1 \nÁndres Álvaro García")
-        brand.setFont(QFont("Segoe UI", 42, QFont.Bold))
+        brand.setFont(QFont("Segoe UI", sc_font(42), QFont.Bold))
         brand.setStyleSheet(f"color: {TEXT_PRIMARY};")
         header.addWidget(brand, 0, Qt.AlignVCenter)
         header.addStretch()
@@ -191,7 +232,7 @@ class MenuPanel(GradientBackground):
         layout.addSpacing(60)
 
         greeting = QLabel("¡Bienvenido de nuevo!")
-        greeting.setFont(QFont("Segoe UI", 30, QFont.Bold))
+        greeting.setFont(QFont("Segoe UI", sc_font(30), QFont.Bold))
         greeting.setStyleSheet(f"color: {TEXT_PRIMARY};")
         layout.addWidget(greeting)
 
@@ -247,7 +288,7 @@ class LoginPage(GradientBackground):
         outer.setAlignment(Qt.AlignCenter)
 
         card = QFrame()
-        card.setFixedWidth(420)
+        card.setFixedWidth(sc(420))
         card.setStyleSheet(f"""
             QFrame {{
                 background: {CARD_BG};
@@ -471,11 +512,15 @@ class MainWindow(QMainWindow):
     # Tamaño de ventana
     # ─────────────────────────────────────────────────────────────────────────
     def _set_login_size(self):
-        """Tamaño compacto para Login/Menú/Register."""
+        """Tamaño compacto para Login/Menú/Register, ajustado a la pantalla."""
         self.setMinimumSize(0, 0)
         self.setMaximumSize(16777215, 16777215)   # sin límite
         screen = QApplication.primaryScreen().availableGeometry()
-        w, h = 860, 600
+        # Tamaño "diseñado" en la pantalla de referencia (860x600), escalado
+        # según el tamaño real de pantalla disponible, con tope para no
+        # exceder el área visible en monitores pequeños.
+        w = min(sc(860), int(screen.width() * 0.9))
+        h = min(sc(600), int(screen.height() * 0.9))
         self.resize(w, h)
         self.move((screen.width() - w) // 2, (screen.height() - h) // 2)
 
@@ -573,6 +618,12 @@ class MainWindow(QMainWindow):
 
 # ── Entry point ───────────────────────────────────────────────────────────────
 if __name__ == "__main__":
+    # Habilita escalado automático según el DPI del sistema operativo,
+    # para que la interfaz se vea consistente en pantallas con distinto
+    # factor de escala (125%, 150%, etc. en Windows).
+    QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
+    QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
+
     app = QApplication(sys.argv)
     app.setStyle("Fusion")
 

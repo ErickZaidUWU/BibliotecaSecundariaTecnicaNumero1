@@ -14,7 +14,7 @@ from colors.colors import TEXT_PRIMARY, TEXT_MUTED, ACCENT, DARK_BG, CARD_BG, BO
 from componets.componets import PrimaryButton
 from login import LoginPanel
 from register import RegisterPanel
-from Inicio import MainWindow, resource_path         # ← importa la ventana principal (menú + crud/loans)
+from Inicio import MainWindow, resource_path, sc         # ← importa la ventana principal (menú + crud/loans)
 
 
 # ── Widget de fondo con gradiente ─────────────────────────────────────────────
@@ -130,7 +130,7 @@ class AuthWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Autenticación")
-        self.setFixedSize(420, 580)
+        self.setFixedSize(sc(420), sc(580))
         self.setWindowFlags(Qt.FramelessWindowHint)
         self.setAttribute(Qt.WA_TranslucentBackground)
         self._drag_pos = None
@@ -139,7 +139,7 @@ class AuthWindow(QMainWindow):
 
     def _build_ui(self):
         root = GradientBackground()
-        root.setFixedSize(420, 580)
+        root.setFixedSize(sc(420), sc(580))
         self.setCentralWidget(root)
 
         outer = QVBoxLayout(root)
@@ -209,8 +209,8 @@ class AuthWindow(QMainWindow):
         outer.addWidget(card, alignment=Qt.AlignCenter)
         outer.addStretch()
 
-        card.setFixedWidth(348)
-        card.setMinimumHeight(460)
+        card.setFixedWidth(sc(348))
+        card.setMinimumHeight(sc(460))
 
     # ── Navegación ─────────────────────────────────────────────────────────────
     def _go_welcome(self):  self.stack.setCurrentIndex(0)
@@ -249,6 +249,12 @@ class AuthWindow(QMainWindow):
 
 # ── Entry point ───────────────────────────────────────────────────────────────
 if __name__ == "__main__":
+    # Habilita escalado automático según el DPI del sistema operativo,
+    # para que la interfaz se vea consistente en pantallas con distinto
+    # factor de escala (125%, 150%, etc. en Windows).
+    QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
+    QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
+
     app = QApplication(sys.argv)
     app.setStyle("Fusion")
 
