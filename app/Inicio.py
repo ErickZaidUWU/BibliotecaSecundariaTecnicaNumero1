@@ -190,9 +190,8 @@ class MenuPanel(GradientBackground):
         layout.addLayout(header)
         layout.addSpacing(60)
 
-        # Tamaño invertido: ahora 18pt (antes era el de "Secundaria...")
         greeting = QLabel("¡Bienvenido de nuevo!")
-        greeting.setFont(QFont("Segoe UI", 18, QFont.Bold))
+        greeting.setFont(QFont("Segoe UI", 30, QFont.Bold))
         greeting.setStyleSheet(f"color: {TEXT_PRIMARY};")
         layout.addWidget(greeting)
 

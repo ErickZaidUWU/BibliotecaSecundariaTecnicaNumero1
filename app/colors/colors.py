@@ -8,8 +8,8 @@ INPUT_BG     = "#FFF6E8"
 BORDER       = "#F2B860"   
 
 # Acento 
-ACCENT       = "#FF7307"   
-ACCENT_HOVER = "#E05F00"  
+ACCENT       = "#903E00"   
+ACCENT_HOVER = "#DC5C00"  
 ACCENT_GLOW  = "#FFB066"   
 
 # Texto

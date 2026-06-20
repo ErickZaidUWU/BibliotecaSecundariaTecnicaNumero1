@@ -1,3 +1,4 @@
+import os
 import sys
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout,
@@ -7,13 +8,13 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import (
     QColor, QFont, QPalette, QLinearGradient,
-    QBrush, QPainter
+    QBrush, QPainter, QPixmap
 )
 from colors.colors import TEXT_PRIMARY, TEXT_MUTED, ACCENT, DARK_BG, CARD_BG, BORDER, INPUT_BG
 from componets.componets import PrimaryButton
 from login import LoginPanel
 from register import RegisterPanel
-from Inicio import MainWindow         # ← importa la ventana principal (menú + crud/loans)
+from Inicio import MainWindow, resource_path         # ← importa la ventana principal (menú + crud/loans)
 
 
 # ── Widget de fondo con gradiente ─────────────────────────────────────────────
@@ -47,10 +48,16 @@ class WelcomePanel(QWidget):
         layout.setSpacing(16)
         layout.setContentsMargins(0, 0, 0, 0)
 
-        logo = QLabel("◈")
+        logo = QLabel()
         logo.setAlignment(Qt.AlignCenter)
-        logo.setFont(QFont("Segoe UI", 46))
-        logo.setStyleSheet(f"color: {ACCENT}; margin-bottom: 4px;")
+        logo_pix = QPixmap(resource_path(os.path.join("imgs", "logo.png")))
+        if not logo_pix.isNull():
+            logo.setPixmap(logo_pix.scaledToHeight(130, Qt.SmoothTransformation))
+        else:
+            # Si no se encuentra el logo, se usa el texto como respaldo
+            logo.setText("...")
+            logo.setFont(QFont("Segoe UI", 46))
+            logo.setStyleSheet(f"color: {ACCENT}; margin-bottom: 4px;")
         layout.addWidget(logo)
 
         title = QLabel("Bienvenid@")
