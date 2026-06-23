@@ -96,7 +96,7 @@ class WelcomePanel(QWidget):
         btn_register = QPushButton("  Crear Cuenta")
         btn_register.setFixedHeight(50)
         btn_register.setCursor(Qt.PointingHandCursor)
-        btn_register.setFont(QFont("Segoe UI", 11, QFont.Bold))
+        btn_register.setFont(QFont("Segoe UI", 15, QFont.Bold))
         btn_register.setStyleSheet(f"""
             QPushButton {{
                 background: transparent;
@@ -123,7 +123,7 @@ class WelcomePanel(QWidget):
         footer.setFont(QFont("Segoe UI", 8))
         footer.setStyleSheet(f"color: {TEXT_MUTED}; margin-top: 20px;")
         layout.addWidget(footer)
-
+# Ficha de prestamo / Prestamos vencidos / busqueda por categoria o área / por autor / por titulo 
 
 # ── Ventana Principal ─────────────────────────────────────────────────────────
 class AuthWindow(QMainWindow):

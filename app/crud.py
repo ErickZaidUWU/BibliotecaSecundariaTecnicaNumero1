@@ -19,7 +19,7 @@ from componets.componets import StyledInput, PrimaryButton
 from supabase_client import supabase
 
 
-# ── Fondo con gradiente (reutilizado del proyecto) ────────────────────────────
+# ── Fondo con gradiente ───────────────────────────────────────────────────────
 class GradientBackground(QWidget):
     def paintEvent(self, event):
         painter = QPainter(self)
@@ -38,8 +38,8 @@ class GradientBackground(QWidget):
         glow2.setAlpha(14)
         painter.setBrush(glow2)
         painter.drawEllipse(self.width() - 250, self.height() - 200, 400, 400)
- 
- 
+
+
 # ── Estilos globales ──────────────────────────────────────────────────────────
 TABLE_STYLE = f"""
     QTableWidget {{
@@ -61,7 +61,7 @@ TABLE_STYLE = f"""
     QHeaderView::section {{
         background-color: {CARD_BG};
         color: {TEXT_MUTED};
-        font-size: 11px;
+        font-size: 14px;
         font-weight: 600;
         letter-spacing: 0.5px;
         padding: 10px 14px;
@@ -81,7 +81,7 @@ TABLE_STYLE = f"""
     }}
     QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{ height: 0; }}
 """
- 
+
 INPUT_STYLE = f"""
     QLineEdit {{
         background: {INPUT_BG};
@@ -98,7 +98,7 @@ INPUT_STYLE = f"""
         color: {TEXT_MUTED};
     }}
 """
- 
+
 BTN_DANGER = f"""
     QPushButton {{
         background: rgba(217,83,79,0.12);
@@ -114,7 +114,7 @@ BTN_DANGER = f"""
         border: 1px solid {ERROR};
     }}
 """
- 
+
 BTN_ACCENT = f"""
     QPushButton {{
         background: rgba(255,115,7,0.15);
@@ -141,7 +141,7 @@ class BookDialog(QDialog):
         self.setModal(True)
         self.setStyleSheet(f"background: {CARD_BG}; border-radius: 14px;")
 
-        self.result_data = None  
+        self.result_data = None
 
         layout = QVBoxLayout(self)
         layout.setSpacing(8)
@@ -152,7 +152,6 @@ class BookDialog(QDialog):
         ttl.setStyleSheet(f"color: {TEXT_PRIMARY};")
         layout.addWidget(ttl)
 
-        # Campos alineados al 100% con las columnas de tu BD de Supabase
         fields = [
             ("Título",    "Ej: El Señor de los Anillos"),
             ("Autor",     "Ej: J.R.R. Tolkien"),
@@ -161,7 +160,7 @@ class BookDialog(QDialog):
             ("Edición",   "Ej: 2"),
             ("Editorial", "Ej: Minotauro"),
             ("ISBN",      "Ej: 9788445077528"),
-            ("Cantidad",     "Ej: 5"),
+            ("Cantidad",  "Ej: 5"),
         ]
 
         self.inputs = {}
@@ -219,7 +218,6 @@ class BookDialog(QDialog):
             self.msg.setText("⚠  Todos los campos son obligatorios.")
             return
 
-        # Corrección de índices de validación (Año está en índice 2, Edición en índice 4, Cantidad en índice 7, ISBN en índice 6)
         try:
             int(values[2])
             int(values[7])
@@ -236,7 +234,7 @@ class LibraryCRUD(QMainWindow):
     def __init__(self, user_email="usuario@ejemplo.com", on_logout=None):
         super().__init__()
         self.user_email = user_email
-        self.on_logout  = on_logout        
+        self.on_logout  = on_logout
         self._drag_pos  = None
 
         self.setWindowTitle("Biblioteca Secundaria Técnica Nº1")
@@ -244,25 +242,51 @@ class LibraryCRUD(QMainWindow):
         self.setWindowFlags(Qt.FramelessWindowHint)
         self.setAttribute(Qt.WA_TranslucentBackground)
 
-        self._books = [] 
+        self._books = []
+        self._sort_order = None
+        self._filter_panel_open = False
+        self._sort_style_active = f"""
+            QPushButton {{
+                background: rgba(255,115,7,0.22);
+                color: {ACCENT};
+                border: 1px solid {ACCENT};
+                border-radius: 8px;
+                font-size: 12px;
+                font-weight: 600;
+                padding: 4px 12px;
+            }}
+        """
+        self._sort_style_inactive = f"""
+            QPushButton {{
+                background: transparent;
+                color: {TEXT_MUTED};
+                border: 1px solid {BORDER};
+                border-radius: 8px;
+                font-size: 12px;
+                font-weight: 600;
+                padding: 4px 12px;
+            }}
+            QPushButton:hover {{
+                color: {ACCENT};
+                border-color: {ACCENT};
+            }}
+        """
         self._build_ui()
 
     def _load_data_from_supabase(self):
         try:
             response = supabase.table("books").select("*").execute()
-        
             self._books = []
             for b in response.data:
-                # b.get("name") corrige el mapeo con tu columna de la nube
                 self._books.append([
-                    b.get("name", ""),      
-                    b.get("author", ""),    
-                    str(b.get("year", 0)),  
-                    b.get("category", ""),  
-                    str(b.get("edition", 0)), 
-                    b.get("publisher", ""),  
-                    b.get("isbn", ""),  
-                    str(b.get("stock", 0)), 
+                    b.get("name", ""),
+                    b.get("author", ""),
+                    str(b.get("year", 0)),
+                    b.get("category", ""),
+                    str(b.get("edition", 0)),
+                    b.get("publisher", ""),
+                    b.get("isbn", ""),
+                    str(b.get("stock", 0)),
                 ])
         except Exception as e:
             self._show_toast(f"❌ Error de red: {str(e)}")
@@ -280,6 +304,7 @@ class LibraryCRUD(QMainWindow):
         body_layout.setContentsMargins(28, 22, 28, 22)
         body_layout.setSpacing(16)
 
+        # ── Header ────────────────────────────────────────────────────────────
         header_row = QHBoxLayout()
         h_title = QLabel("Catálogo de Libros")
         h_title.setFont(QFont("Segoe UI", 18, QFont.Bold))
@@ -293,20 +318,139 @@ class LibraryCRUD(QMainWindow):
         header_row.addWidget(add_btn)
         body_layout.addLayout(header_row)
 
+        # ── Barra de búsqueda ─────────────────────────────────────────────────
         search_row = QHBoxLayout()
         self.search_input = QLineEdit()
         self.search_input.setPlaceholderText("🔍  Buscar por título, autor o categoría…")
         self.search_input.setFixedHeight(40)
         self.search_input.setStyleSheet(INPUT_STYLE)
-        self.search_input.textChanged.connect(self._filter_table)
+        self.search_input.textChanged.connect(self._apply_filters)
         search_row.addWidget(self.search_input)
         body_layout.addLayout(search_row)
 
+        # ── Fila de stats + botón filtros ─────────────────────────────────────
+        stats_and_filter_row = QHBoxLayout()
+        stats_and_filter_row.setSpacing(12)
+
         self.stats_row = QHBoxLayout()
         self.stats_row.setSpacing(12)
-        body_layout.addLayout(self.stats_row)
+        stats_and_filter_row.addLayout(self.stats_row)
+        stats_and_filter_row.addStretch()
 
-        # Ajustado a 6 columnas en total (Removido ISBN de la vista)
+        self.filter_btn = QPushButton("⚙  Filtros")
+        self.filter_btn.setFixedHeight(36)
+        self.filter_btn.setCursor(Qt.PointingHandCursor)
+        self.filter_btn.setCheckable(True)
+        self.filter_btn.setStyleSheet(f"""
+            QPushButton {{
+                background: rgba(255,115,7,0.08);
+                color: {TEXT_MUTED};
+                border: 1px solid {BORDER};
+                border-radius: 10px;
+                font-size: 12px;
+                font-weight: 600;
+                padding: 6px 16px;
+            }}
+            QPushButton:hover {{
+                color: {ACCENT};
+                border-color: {ACCENT};
+                background: rgba(255,115,7,0.14);
+            }}
+            QPushButton:checked {{
+                color: {ACCENT};
+                border-color: {ACCENT};
+                background: rgba(255,115,7,0.18);
+            }}
+        """)
+        self.filter_btn.clicked.connect(self._toggle_filter_panel)
+        stats_and_filter_row.addWidget(self.filter_btn)
+
+        body_layout.addLayout(stats_and_filter_row)
+
+        # ── Panel de filtros (oculto por defecto) ─────────────────────────────
+        self.filter_panel = QFrame()
+        self.filter_panel.setFixedHeight(0)
+        self.filter_panel.setStyleSheet(f"""
+            QFrame {{
+                background: rgba(255,115,7,0.05);
+                border: 1px solid {BORDER};
+                border-radius: 12px;
+            }}
+        """)
+
+        filter_inner = QHBoxLayout(self.filter_panel)
+        filter_inner.setContentsMargins(16, 10, 16, 10)
+        filter_inner.setSpacing(16)
+
+        # Filtro: Categoría
+        cat_label = QLabel("Categoría")
+        cat_label.setStyleSheet(f"color: {TEXT_MUTED}; font-size: 11px; font-weight: 600; border: none; background: transparent;")
+        self.filter_category = QLineEdit()
+        self.filter_category.setPlaceholderText("Ej: Fantasía")
+        self.filter_category.setFixedHeight(34)
+        self.filter_category.setStyleSheet(INPUT_STYLE)
+        self.filter_category.textChanged.connect(self._apply_filters)
+
+        cat_col = QVBoxLayout()
+        cat_col.setSpacing(4)
+        cat_col.addWidget(cat_label)
+        cat_col.addWidget(self.filter_category)
+        filter_inner.addLayout(cat_col)
+
+        # Filtro: Autor
+        aut_label = QLabel("Autor")
+        aut_label.setStyleSheet(f"color: {TEXT_MUTED}; font-size: 11px; font-weight: 600; border: none; background: transparent;")
+        self.filter_author = QLineEdit()
+        self.filter_author.setPlaceholderText("Ej: Tolkien")
+        self.filter_author.setFixedHeight(34)
+        self.filter_author.setStyleSheet(INPUT_STYLE)
+        self.filter_author.textChanged.connect(self._apply_filters)
+
+        aut_col = QVBoxLayout()
+        aut_col.setSpacing(4)
+        aut_col.addWidget(aut_label)
+        aut_col.addWidget(self.filter_author)
+        filter_inner.addLayout(aut_col)
+
+        # Filtro: Orden ascendente / descendente
+        ord_label = QLabel("Ordenar por título")
+        ord_label.setStyleSheet(f"color: {TEXT_MUTED}; font-size: 11px; font-weight: 600; border: none; background: transparent;")
+
+        ord_row = QHBoxLayout()
+        ord_row.setSpacing(6)
+
+        self.sort_asc  = QPushButton("↑  A → Z")
+        self.sort_desc = QPushButton("↓  Z → A")
+        self.sort_asc.setFixedHeight(34)
+        self.sort_desc.setFixedHeight(34)
+        self.sort_asc.setCursor(Qt.PointingHandCursor)
+        self.sort_desc.setCursor(Qt.PointingHandCursor)
+        self.sort_asc.setStyleSheet(self._sort_style_inactive)
+        self.sort_desc.setStyleSheet(self._sort_style_inactive)
+        self.sort_asc.clicked.connect(lambda: self._set_sort("asc"))
+        self.sort_desc.clicked.connect(lambda: self._set_sort("desc"))
+
+        ord_row.addWidget(self.sort_asc)
+        ord_row.addWidget(self.sort_desc)
+
+        ord_col = QVBoxLayout()
+        ord_col.setSpacing(4)
+        ord_col.addWidget(ord_label)
+        ord_col.addLayout(ord_row)
+        filter_inner.addLayout(ord_col)
+
+        # Botón limpiar filtros
+        clear_btn = QPushButton("✕  Limpiar")
+        clear_btn.setFixedHeight(34)
+        clear_btn.setCursor(Qt.PointingHandCursor)
+        clear_btn.setStyleSheet(self._sort_style_inactive)
+        clear_btn.clicked.connect(self._clear_filters)
+        filter_inner.addStretch()
+        filter_inner.addWidget(clear_btn)
+
+        body_layout.addWidget(self.filter_panel)
+
+        # ── Tabla ─────────────────────────────────────────────────────────────
         self.table = QTableWidget()
         self.table.setColumnCount(9)
         self.table.setHorizontalHeaderLabels(
@@ -326,6 +470,7 @@ class LibraryCRUD(QMainWindow):
         self.table.setFrameShape(QFrame.NoFrame)
         body_layout.addWidget(self.table)
 
+        # ── Toast ─────────────────────────────────────────────────────────────
         self.toast = QLabel("")
         self.toast.setAlignment(Qt.AlignCenter)
         self.toast.setFixedHeight(0)
@@ -343,10 +488,11 @@ class LibraryCRUD(QMainWindow):
 
         main.addWidget(body)
 
-        self._load_data_from_supabase() 
+        self._load_data_from_supabase()
         self._refresh_table()
         self._refresh_stats()
 
+    # ── Stats ─────────────────────────────────────────────────────────────────
     def _refresh_stats(self):
         while self.stats_row.count():
             item = self.stats_row.takeAt(0)
@@ -354,9 +500,8 @@ class LibraryCRUD(QMainWindow):
                 item.widget().deleteLater()
 
         total_libros = len(self._books)
-        # Corrección de índices para las operaciones de conteo matemático
-        total_stock  = sum(int(b[7]) for b in self._books) 
-        categorias   = len(set(b[3] for b in self._books)) 
+        total_stock  = sum(int(b[7]) for b in self._books)
+        categorias   = len(set(b[3] for b in self._books))
 
         for icon, value, label in [
             ("📚", str(total_libros), "Títulos"),
@@ -383,8 +528,7 @@ class LibraryCRUD(QMainWindow):
             cl.addWidget(txt)
             self.stats_row.addWidget(chip)
 
-        self.stats_row.addStretch()
-
+    # ── Tabla ─────────────────────────────────────────────────────────────────
     def _refresh_table(self, data=None):
         books = data if data is not None else self._books
         self.table.setRowCount(len(books))
@@ -419,28 +563,76 @@ class LibraryCRUD(QMainWindow):
 
             self.table.setCellWidget(row, 8, action_widget)
 
-    def _filter_table(self, text):
-        q = text.lower()
-        if not q:
-            self._refresh_table()
-            return
-        filtered = [b for b in self._books
-                    if q in b[0].lower() or q in b[1].lower() or q in b[3].lower()]
-        self._refresh_table(filtered)
+    # ── Panel de filtros ──────────────────────────────────────────────────────
+    def _toggle_filter_panel(self):
+        self._filter_panel_open = not self._filter_panel_open
+        target_height = 68 if self._filter_panel_open else 0
+        self.filter_panel.setFixedHeight(target_height)
 
+    def _set_sort(self, order):
+        if self._sort_order == order:
+            # Desactivar si ya estaba seleccionado
+            self._sort_order = None
+            self.sort_asc.setStyleSheet(self._sort_style_inactive)
+            self.sort_desc.setStyleSheet(self._sort_style_inactive)
+        else:
+            self._sort_order = order
+            self.sort_asc.setStyleSheet(
+                self._sort_style_active if order == "asc" else self._sort_style_inactive
+            )
+            self.sort_desc.setStyleSheet(
+                self._sort_style_active if order == "desc" else self._sort_style_inactive
+            )
+        self._apply_filters()
+
+    def _apply_filters(self):
+        cat_q    = self.filter_category.text().strip().lower()
+        aut_q    = self.filter_author.text().strip().lower()
+        search_q = self.search_input.text().strip().lower()
+
+        result = self._books
+
+        if search_q:
+            result = [b for b in result
+                      if search_q in b[0].lower()
+                      or search_q in b[1].lower()
+                      or search_q in b[3].lower()]
+        if cat_q:
+            result = [b for b in result if cat_q in b[3].lower()]
+        if aut_q:
+            result = [b for b in result if aut_q in b[1].lower()]
+        if self._sort_order == "asc":
+            result = sorted(result, key=lambda b: b[0].lower())
+        elif self._sort_order == "desc":
+            result = sorted(result, key=lambda b: b[0].lower(), reverse=True)
+
+        self._refresh_table(result)
+
+    def _clear_filters(self):
+        self.filter_category.blockSignals(True)
+        self.filter_author.blockSignals(True)
+        self.filter_category.clear()
+        self.filter_author.clear()
+        self.filter_category.blockSignals(False)
+        self.filter_author.blockSignals(False)
+        self._sort_order = None
+        self.sort_asc.setStyleSheet(self._sort_style_inactive)
+        self.sort_desc.setStyleSheet(self._sort_style_inactive)
+        self._refresh_table()
+
+    # ── CRUD ──────────────────────────────────────────────────────────────────
     def _add_book(self):
         dlg = BookDialog(self)
         if dlg.exec_() == QDialog.Accepted and dlg.result_data:
-            # Removido ISBN de la estructura enviada a la API
             new_book = {
-                "name": dlg.result_data[0],
-                "author": dlg.result_data[1],
-                "year": int(dlg.result_data[2]),
-                "category": dlg.result_data[3],
-                "edition": int(dlg.result_data[4]),  # NUEVO
-                "publisher": dlg.result_data[5],     # NUEVO
-                "isbn": dlg.result_data[6],          # NUEVO
-                "stock": int(dlg.result_data[7])     # Actualizado índice a 7
+                "name":      dlg.result_data[0],
+                "author":    dlg.result_data[1],
+                "year":      int(dlg.result_data[2]),
+                "category":  dlg.result_data[3],
+                "edition":   int(dlg.result_data[4]),
+                "publisher": dlg.result_data[5],
+                "isbn":      dlg.result_data[6],
+                "stock":     int(dlg.result_data[7]),
             }
             try:
                 supabase.table("books").insert(new_book).execute()
@@ -459,18 +651,16 @@ class LibraryCRUD(QMainWindow):
 
         dlg = BookDialog(self, book_data=self._books[real_idx][:8])
         if dlg.exec_() == QDialog.Accepted and dlg.result_data:
-            # Tu llave primaria en Supabase es el título ('name')
-            book_name = self._books[real_idx][0] 
-            
+            book_name = self._books[real_idx][0]
             updated_data = {
-                "name": dlg.result_data[0],
-                "author": dlg.result_data[1],
-                "year": int(dlg.result_data[2]),
-                "category": dlg.result_data[3],
-                "edition": dlg.result_data[4],  # NUEVO
-                "publisher": dlg.result_data[5],     # NUEVO
-                "isbn": dlg.result_data[6],          # NUEVO
-                "stock": int(dlg.result_data[7])     # Actualizado índice a 7
+                "name":      dlg.result_data[0],
+                "author":    dlg.result_data[1],
+                "year":      int(dlg.result_data[2]),
+                "category":  dlg.result_data[3],
+                "edition":   dlg.result_data[4],
+                "publisher": dlg.result_data[5],
+                "isbn":      dlg.result_data[6],
+                "stock":     int(dlg.result_data[7]),
             }
             try:
                 supabase.table("books").update(updated_data).eq("name", book_name).execute()
@@ -484,8 +674,8 @@ class LibraryCRUD(QMainWindow):
     def _delete_book(self, row):
         title_item = self.table.item(row, 0)
         title = title_item.text() if title_item else ""
-        
-        if not title: return
+        if not title:
+            return
 
         mb = QMessageBox(self)
         mb.setWindowTitle("Confirmar eliminación")
@@ -509,6 +699,7 @@ class LibraryCRUD(QMainWindow):
             except Exception as e:
                 self._show_toast("❌ Error al eliminar.")
 
+    # ── Utilidades ────────────────────────────────────────────────────────────
     def _show_toast(self, msg):
         self.toast.setText(msg)
         self.toast.setFixedHeight(38)

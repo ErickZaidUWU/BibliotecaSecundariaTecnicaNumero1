@@ -99,7 +99,7 @@ class RegisterPanel(QWidget):
             response = supabase.auth.sign_up({
                 "email": email,
                 "password": password,
-                "options": {"data": {"full_name": name}}
+                "options": {"data": {"username": name}}
             })
             
             # 2. Extraer el ID único (UUID) que Supabase le asignó al usuario creado
@@ -108,7 +108,7 @@ class RegisterPanel(QWidget):
             # 3. Insertar MANUALMENTE en tu tabla de perfiles usando la estructura original
             profile_data = {
                 "id": user_id,          # Llave primaria vinculada a auth.users
-                "full_name": name,      # Nombre completo ingresado
+                "username": name,      # Nombre completo ingresado
                 "email": email,         # Correo del usuario
             }
             

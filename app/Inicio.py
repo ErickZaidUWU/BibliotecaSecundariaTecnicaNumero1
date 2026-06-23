@@ -123,7 +123,7 @@ class ModuleCard(QFrame):
 
         icon_lbl = QLabel(icon)
         icon_lbl.setFont(QFont("Segoe UI", 26))
-        icon_lbl.setFixedWidth(40)
+        icon_lbl.setFixedWidth(80)
 
         top_row.addWidget(icon_lbl)
 
